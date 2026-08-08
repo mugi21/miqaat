@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Notifications de prière (Android 13+) -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Alarmes exactes : SCHEDULE_EXACT_ALARM (Android 12/12L, accordée par défaut,
+         révocable) puis USE_EXACT_ALARM (Android 13+, accordée d'office aux apps dont
+         la fonction principale est l'alarme — cas d'une app de prière). -->
+    <uses-permission
+        android:name="android.permission.SCHEDULE_EXACT_ALARM"
+        android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <!-- Replanifier la chaîne d'alarmes après un redémarrage -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- Jouer l'adhan et le rappel nous-mêmes : un service d'avant-plan est le seul
+         moyen de survivre à la fin du receiver d'alarme. FOREGROUND_SERVICE_SHORT_SERVICE
+         (Android 14+) correspond au cas : quelques dizaines de secondes de son. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SHORT_SERVICE" />
+    <!-- Position approximative : suffisante pour les horaires (précision « ville »),
+         un seul fix ponctuel, jamais en arrière-plan -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+    <!-- Boussole Qibla : le magnétomètre est confortable mais non obligatoire
+         (sans lui, l'écran affiche quand même l'angle de la Qibla). -->
+    <uses-feature
+        android:name="android.hardware.sensor.compass"
+        android:required="false" />
+
+    <application
+        android:name=".MiqaatApp"
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:localeConfig="@xml/locales_config"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Miqaat">
+        <!-- singleTop : la notification d'une invocation réutilise l'activité déjà
+             ouverte (onNewIntent) au lieu d'en empiler une seconde copie. -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:launchMode="singleTop"
+            android:theme="@style/Theme.Miqaat"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <receiver
+            android:name=".notifications.PrayerAlarmReceiver"
+            android:exported="false" />
+
+        <!-- Lecture de l'adhan / du rappel, avec focus audio (met la musique en pause).
+             Démarré depuis le receiver d'alarme exacte, cas exempté de l'interdiction
+             de lancer un service d'avant-plan depuis l'arrière-plan. -->
+        <service
+            android:name=".notifications.PrayerSoundService"
+            android:exported="false"
+            android:foregroundServiceType="shortService" />
+
+        <!-- Widget d'écran d'accueil. exported="false" suffit : le système est
+             exempté et adresse ses diffusions au composant explicitement. -->
+        <receiver
+            android:name=".widget.NextPrayerWidget"
+            android:exported="false"
+            android:label="@string/widget_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_next_prayer_info" />
+        </receiver>
+
+        <receiver
+            android:name=".notifications.RescheduleReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+            </intent-filter>
+        </receiver>
+    </application>
+
+</manifest>

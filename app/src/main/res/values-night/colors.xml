@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Pas de `splash_background` ici : l'écran de démarrage est vert dans les
+         deux modes (voir values/colors.xml).
+
+         Widget, schéma sombre (voir values/colors.xml). -->
+    <color name="widget_surface">#C71B211D</color>
+    <color name="widget_outline">#408FD5AF</color>
+    <color name="widget_mosaic_line">#2E8FD5AF</color>
+    <color name="widget_on_surface">#DFE4DD</color>
+    <color name="widget_on_surface_variant">#C0C9C0</color>
+    <color name="widget_accent">#8FD5AF</color>
+    <color name="widget_accent_container">#CC005232</color>
+</resources>

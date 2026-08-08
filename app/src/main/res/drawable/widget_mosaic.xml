@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Trame de mosaïque girih : le motif « khātam » — une étoile à huit branches
+     obtenue en superposant un carré et son homologue tourné de 45°, répétée sur
+     une grille de 60 unités, avec un petit losange à chaque croisement (l'élément
+     qui, dans un zellige, remplit l'espace entre quatre étoiles).
+     Le viewport déborde volontairement : le vector rogne, donc les motifs des
+     bords sont coupés net, comme un panneau découpé dans un plus grand. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="240dp"
+    android:height="120dp"
+    android:viewportWidth="240"
+    android:viewportHeight="120">
+
+    <!-- Les carrés tournés à 45° (quatre branches sur les axes) -->
+    <path
+        android:pathData="M30,4L56,30L30,56L4,30Z M90,4L116,30L90,56L64,30Z
+                          M150,4L176,30L150,56L124,30Z M210,4L236,30L210,56L184,30Z
+                          M30,64L56,90L30,116L4,90Z M90,64L116,90L90,116L64,90Z
+                          M150,64L176,90L150,116L124,90Z M210,64L236,90L210,116L184,90Z"
+        android:strokeColor="@color/widget_mosaic_line"
+        android:strokeWidth="1.1" />
+
+    <!-- Les carrés droits (les quatre branches diagonales) -->
+    <path
+        android:pathData="M11.6,11.6H48.4V48.4H11.6Z M71.6,11.6H108.4V48.4H71.6Z
+                          M131.6,11.6H168.4V48.4H131.6Z M191.6,11.6H228.4V48.4H191.6Z
+                          M11.6,71.6H48.4V108.4H11.6Z M71.6,71.6H108.4V108.4H71.6Z
+                          M131.6,71.6H168.4V108.4H131.6Z M191.6,71.6H228.4V108.4H191.6Z"
+        android:strokeColor="@color/widget_mosaic_line"
+        android:strokeWidth="1.1" />
+
+    <!-- Les losanges de remplissage, aux croisements de la grille -->
+    <path
+        android:pathData="M0,-8L8,0L0,8L-8,0Z M60,-8L68,0L60,8L52,0Z M120,-8L128,0L120,8L112,0Z
+                          M180,-8L188,0L180,8L172,0Z M240,-8L248,0L240,8L232,0Z
+                          M0,52L8,60L0,68L-8,60Z M60,52L68,60L60,68L52,60Z M120,52L128,60L120,68L112,60Z
+                          M180,52L188,60L180,68L172,60Z M240,52L248,60L240,68L232,60Z
+                          M0,112L8,120L0,128L-8,120Z M60,112L68,120L60,128L52,120Z
+                          M120,112L128,120L120,128L112,120Z M180,112L188,120L180,128L172,120Z
+                          M240,112L248,120L240,128L232,120Z"
+        android:strokeColor="@color/widget_mosaic_line"
+        android:strokeWidth="1" />
+</vector>

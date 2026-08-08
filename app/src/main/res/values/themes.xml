@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Thème de la fenêtre avant Compose : seul le fond compte, tout le reste
+         est peint par MiqaatTheme. Le fond est le vert de l'écran de démarrage,
+         qui est la première chose affichée — sans quoi un éclair clair (ou sombre)
+         s'intercale entre l'écran système et notre SplashScreen. -->
+    <style name="Base.Theme.Miqaat" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/splash_background</item>
+    </style>
+
+    <!-- Le thème réellement appliqué. Séparé de la base pour que values-v31 puisse
+         y ajouter les attributs de l'écran de démarrage système sans avoir à
+         redéclarer un parent clair *et* un parent sombre. -->
+    <style name="Theme.Miqaat" parent="Base.Theme.Miqaat" />
+</resources>

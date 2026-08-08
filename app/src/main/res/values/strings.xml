@@ -1,0 +1,157 @@
+<resources>
+    <string name="app_name">ميقات</string>
+    <!-- Écran de démarrage : une ligne qui dit à quoi sert l'app. -->
+    <string name="app_tagline">مواقيت الصلاة أينما كنت، دون إنترنت</string>
+    <string name="prayer_fajr">الفجر</string>
+    <string name="prayer_sunrise">الشروق</string>
+    <string name="prayer_dhuhr">الظهر</string>
+    <string name="prayer_asr">العصر</string>
+    <string name="prayer_maghrib">المغرب</string>
+    <string name="prayer_isha">العشاء</string>
+    <string name="next_prayer_title">الصلاة القادمة</string>
+    <string name="tomorrow_fajr">فجر الغد</string>
+    <string name="time_remaining">الوقت المتبقّي</string>
+    <string name="section_today_times">مواقيت اليوم</string>
+    <string name="notification_channel_name">مواقيت الصلاة</string>
+    <string name="notification_channel_description">إشعار عند دخول وقت كل صلاة</string>
+    <string name="notification_prayer_time">حان الآن وقت صلاة %1$s</string>
+    <string name="notification_call">حيّ على الصلاة، حيّ على الفلاح</string>
+
+    <!-- Rappel avant l'adhan -->
+    <string name="notification_reminder_channel_name">التذكير قبل الأذان</string>
+    <string name="notification_reminder_channel_description">تنبيه قبل دخول وقت الصلاة بمدّة تختارها</string>
+    <string name="notification_reminder_title">اقترب وقت صلاة %1$s</string>
+    <string name="notification_reminder_text">بقي %1$s على الأذان</string>
+    <plurals name="duration_minutes">
+        <item quantity="zero">%d دقيقة</item>
+        <item quantity="one">دقيقة واحدة</item>
+        <item quantity="two">دقيقتان</item>
+        <item quantity="few">%d دقائق</item>
+        <item quantity="many">%d دقيقة</item>
+        <item quantity="other">%d دقيقة</item>
+    </plurals>
+
+    <string name="action_back">الرجوع</string>
+    <string name="action_close">إغلاق</string>
+
+    <string name="settings_title">الإعدادات</string>
+    <string name="settings_open">فتح الإعدادات</string>
+    <string name="settings_cancel">إلغاء</string>
+    <string name="settings_calc_method">طريقة الحساب</string>
+    <string name="settings_madhab">مذهب حساب العصر</string>
+    <string name="settings_reminder">التذكير قبل الأذان</string>
+    <string name="settings_reminder_hint">تنبيه قبل دخول وقت الصلاة للاستعداد</string>
+    <string name="settings_reminder_lead">مدّة التذكير</string>
+    <string name="settings_language">لغة التطبيق</string>
+    <string name="language_system">لغة الهاتف</string>
+    <!-- Chaque langue est nommée dans sa propre langue : valeur identique dans les trois fichiers. -->
+    <string name="language_arabic">العربية</string>
+    <string name="language_french">Français</string>
+    <string name="language_english">English</string>
+    <string name="settings_adjustments">تعديل المواقيت يدويًّا</string>
+    <string name="settings_adjustments_hint">لمطابقة تقويم مسجدك أو بلدك، بالدقائق</string>
+    <string name="settings_adjustments_none">بدون تعديل</string>
+    <string name="settings_adjustments_reset">إعادة الضبط</string>
+    <string name="settings_adjustments_increase">زيادة دقيقة على %1$s</string>
+    <string name="settings_adjustments_decrease">إنقاص دقيقة من %1$s</string>
+    <string name="settings_hijri_offset">تعديل التاريخ الهجري</string>
+    <string name="settings_hijri_offset_hint">لمطابقة الرؤية المحلية للهلال</string>
+    <string name="settings_hijri_no_offset">بدون تعديل</string>
+    <string name="settings_hijri_increase">زيادة يوم</string>
+    <string name="settings_hijri_decrease">إنقاص يوم</string>
+    <string name="madhab_shafi">الجمهور (الشافعي والمالكي والحنبلي)</string>
+    <string name="madhab_hanafi">الحنفي</string>
+    <string name="method_mwl">رابطة العالم الإسلامي</string>
+    <string name="method_egyptian">الهيئة المصرية العامة للمساحة</string>
+    <string name="method_karachi">جامعة العلوم الإسلامية بكراتشي</string>
+    <string name="method_umm_al_qura">جامعة أم القرى (مكة المكرمة)</string>
+    <string name="method_dubai">دبي (الإمارات)</string>
+    <string name="method_moonsighting">لجنة رؤية الهلال</string>
+    <string name="method_north_america">الجمعية الإسلامية لأمريكا الشمالية (ISNA)</string>
+    <string name="method_kuwait">الكويت</string>
+    <string name="method_qatar">قطر</string>
+    <string name="method_singapore">سنغافورة</string>
+    <string name="method_turkey">رئاسة الشؤون الدينية التركية</string>
+    <string name="method_auto_resolved">تلقائي — %1$s</string>
+    <string name="method_algeria">الجزائر (وزارة الشؤون الدينية والأوقاف)</string>
+    <string name="method_tunisia">تونس (وزارة الشؤون الدينية)</string>
+    <string name="method_morocco">المغرب (وزارة الأوقاف والشؤون الإسلامية)</string>
+    <string name="method_jordan">الأردن (وزارة الأوقاف)</string>
+    <string name="method_france">فرنسا (اتحاد المنظمات الإسلامية)</string>
+    <string name="method_russia">روسيا (الإدارة الدينية لمسلمي روسيا)</string>
+    <string name="method_indonesia">إندونيسيا (وزارة الشؤون الدينية)</string>
+    <string name="method_malaysia">ماليزيا (جاكيم)</string>
+    <string name="method_portugal">البرتغال (الجالية الإسلامية بلشبونة)</string>
+    <string name="method_gulf">منطقة الخليج</string>
+
+    <!-- Boussole Qibla -->
+    <string name="qibla_title">القبلة</string>
+    <string name="qibla_open">فتح البوصلة</string>
+    <string name="qibla_bearing_label">اتجاه القبلة</string>
+    <string name="qibla_distance_label">المسافة إلى الكعبة</string>
+    <string name="qibla_distance_value">%1$s كم</string>
+    <string name="qibla_turn_hint">أدر هاتفك حتى تصل علامة الكعبة إلى المؤشر في الأعلى</string>
+    <string name="qibla_aligned">أنت الآن في اتجاه القبلة</string>
+    <string name="qibla_accuracy_warning">دقّة البوصلة ضعيفة — حرّك هاتفك على شكل الرقم 8 لمعايرتها</string>
+    <string name="qibla_no_compass">لا يحتوي هذا الجهاز على حسّاس مغناطيسي — الزاوية أدناه محسوبة من الشمال الجغرافي</string>
+    <string name="compass_north">ش</string>
+    <string name="compass_east">ق</string>
+    <string name="compass_south">ج</string>
+    <string name="compass_west">غ</string>
+
+    <!-- Calendrier mensuel -->
+    <string name="calendar_title">التقويم</string>
+    <string name="calendar_open">فتح التقويم</string>
+    <string name="calendar_today">اليوم</string>
+    <string name="calendar_previous_month">الشهر السابق</string>
+    <string name="calendar_next_month">الشهر التالي</string>
+
+    <!-- Horaires de Ramadan -->
+    <string name="ramadan_title">مواقيت الصيام</string>
+    <string name="ramadan_imsak">الإمساك</string>
+    <string name="ramadan_imsak_hint">قبل الفجر بـ%1$s</string>
+    <string name="ramadan_iftar">الإفطار</string>
+    <string name="ramadan_iftar_hint">عند أذان المغرب</string>
+    <string name="ramadan_fasting_duration">مدّة الصيام</string>
+    <string name="duration_hours_minutes">%1$d سا %2$02d د</string>
+
+    <!-- Adhkār et invocations -->
+    <string name="invocation_title">الأدعية والأذكار</string>
+    <string name="invocation_open">فتح الأذكار</string>
+    <string name="invocation_add">إضافة دعاء</string>
+    <string name="invocation_edit">تعديل</string>
+    <string name="invocation_delete">حذف</string>
+    <string name="invocation_save">حفظ</string>
+    <string name="invocation_empty">لا توجد أدعية بعد</string>
+    <string name="invocation_field_title">العنوان</string>
+    <string name="invocation_field_body">النص</string>
+    <string name="invocation_builtin_readonly">نصّ مرفق بالتطبيق، يمكنك تغيير موعده فقط</string>
+    <string name="invocation_schedule">موعد التذكير</string>
+    <string name="invocation_schedule_disabled">التذكير موقوف</string>
+    <string name="invocation_mode_fixed">ساعة محدّدة</string>
+    <string name="invocation_mode_anchor">مرتبط بصلاة</string>
+    <string name="invocation_schedule_at">عند الساعة %1$s</string>
+    <string name="invocation_schedule_at_prayer">مع أذان %1$s</string>
+    <string name="invocation_schedule_after">بعد %1$s بـ%2$s</string>
+    <string name="invocation_schedule_before">قبل %1$s بـ%2$s</string>
+    <string name="invocation_pick_time">اختيار الساعة</string>
+    <string name="invocation_offset_increase">تأخير التذكير</string>
+    <string name="invocation_offset_decrease">تقديم التذكير</string>
+    <string name="invocation_guard_hint">إذا وقع تذكير قريبًا من وقت صلاة، يؤخّره التطبيق قليلًا حتى لا يتأخّر الأذان.</string>
+    <string name="invocation_morning_title">أذكار الصباح</string>
+    <string name="invocation_evening_title">أذكار المساء</string>
+    <string name="notification_invocation_channel_name">الأذكار</string>
+    <string name="notification_invocation_channel_description">تذكير بالأدعية والأذكار في مواعيدها</string>
+    <string name="notification_invocation_title">حان وقت %1$s</string>
+    <string name="notification_invocation_text">اضغط للقراءة</string>
+
+    <!-- Textes des أذكار المرفقة : formules rituelles, elles ne se traduisent pas
+         (comme notification_call). Déclarées une seule fois : le repli de
+         ressources d'Android les sert telles quelles en français et en anglais. -->
+    <string name="invocation_morning_body" translatable="false">آية الكرسي:\nاللهُ لا إلهَ إلا هو الحيُّ القيّوم، لا تأخذه سِنةٌ ولا نوم، له ما في السماوات وما في الأرض، من ذا الذي يشفع عنده إلا بإذنه، يعلم ما بين أيديهم وما خلفهم، ولا يحيطون بشيء من علمه إلا بما شاء، وسِع كرسيُّه السماوات والأرض، ولا يؤوده حفظهما، وهو العليُّ العظيم.\n\nالمعوّذات:\nقراءة سورة الإخلاص والفلق والناس، ثلاث مرات.\n\nأصبحنا وأصبح الملك لله، والحمد لله، لا إله إلا الله وحده لا شريك له، له الملك وله الحمد وهو على كل شيء قدير. ربِّ أسألك خير ما في هذا اليوم وخير ما بعده، وأعوذ بك من شر ما في هذا اليوم وشر ما بعده.\n\nاللهم بك أصبحنا، وبك أمسينا، وبك نحيا، وبك نموت، وإليك النشور.\n\nسيّد الاستغفار:\nاللهم أنت ربي لا إله إلا أنت، خلقتني وأنا عبدك، وأنا على عهدك ووعدك ما استطعت، أعوذ بك من شر ما صنعت، أبوء لك بنعمتك عليّ، وأبوء بذنبي فاغفر لي، فإنه لا يغفر الذنوب إلا أنت.\n\nرضيت بالله ربًّا، وبالإسلام دينًا، وبمحمد صلى الله عليه وسلم نبيًّا. (ثلاث مرات)\n\nبسم الله الذي لا يضرّ مع اسمه شيء في الأرض ولا في السماء، وهو السميع العليم. (ثلاث مرات)\n\nحسبي الله لا إله إلا هو، عليه توكلت، وهو ربّ العرش العظيم. (سبع مرات)\n\nسبحان الله وبحمده. (مائة مرة)</string>
+    <string name="invocation_evening_body" translatable="false">آية الكرسي:\nاللهُ لا إلهَ إلا هو الحيُّ القيّوم، لا تأخذه سِنةٌ ولا نوم، له ما في السماوات وما في الأرض، من ذا الذي يشفع عنده إلا بإذنه، يعلم ما بين أيديهم وما خلفهم، ولا يحيطون بشيء من علمه إلا بما شاء، وسِع كرسيُّه السماوات والأرض، ولا يؤوده حفظهما، وهو العليُّ العظيم.\n\nالمعوّذات:\nقراءة سورة الإخلاص والفلق والناس، ثلاث مرات.\n\nأمسينا وأمسى الملك لله، والحمد لله، لا إله إلا الله وحده لا شريك له، له الملك وله الحمد وهو على كل شيء قدير. ربِّ أسألك خير ما في هذه الليلة وخير ما بعدها، وأعوذ بك من شر ما في هذه الليلة وشر ما بعدها.\n\nاللهم بك أمسينا، وبك أصبحنا، وبك نحيا، وبك نموت، وإليك المصير.\n\nسيّد الاستغفار:\nاللهم أنت ربي لا إله إلا أنت، خلقتني وأنا عبدك، وأنا على عهدك ووعدك ما استطعت، أعوذ بك من شر ما صنعت، أبوء لك بنعمتك عليّ، وأبوء بذنبي فاغفر لي، فإنه لا يغفر الذنوب إلا أنت.\n\nأعوذ بكلمات الله التامّات من شرّ ما خلق. (ثلاث مرات)\n\nبسم الله الذي لا يضرّ مع اسمه شيء في الأرض ولا في السماء، وهو السميع العليم. (ثلاث مرات)\n\nرضيت بالله ربًّا، وبالإسلام دينًا، وبمحمد صلى الله عليه وسلم نبيًّا. (ثلاث مرات)\n\nحسبي الله لا إله إلا هو، عليه توكلت، وهو ربّ العرش العظيم. (سبع مرات)\n\nسبحان الله وبحمده. (مائة مرة)</string>
+
+    <!-- Widget de l'écran d'accueil -->
+    <string name="widget_label">ميقات — الصلاة القادمة</string>
+    <string name="widget_description">الصلاة القادمة والوقت المتبقّي ومواقيت اليوم على الشاشة الرئيسية</string>
+</resources>

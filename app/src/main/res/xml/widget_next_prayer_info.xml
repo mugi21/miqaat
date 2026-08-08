@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 3 colonnes × 2 lignes par défaut (la taille posée est décidée par le nombre
+     de cellules, pas par la hauteur du contenu), redimensionnable dans les deux
+     sens. updatePeriodMillis = 30 min : simple filet de sécurité. Le vrai rythme
+     vient de la chaîne d'alarmes exactes (PrayerAlarmScheduler), et le décompte
+     est tenu par le Chronometer côté lanceur — le widget n'a donc pas besoin de
+     réveils périodiques pour rester juste. -->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/widget_description"
+    android:initialLayout="@layout/widget_next_prayer"
+    android:minHeight="110dp"
+    android:minResizeHeight="100dp"
+    android:minResizeWidth="150dp"
+    android:minWidth="180dp"
+    android:previewImage="@drawable/widget_preview"
+    android:previewLayout="@layout/widget_next_prayer"
+    android:resizeMode="horizontal|vertical"
+    android:targetCellHeight="2"
+    android:targetCellWidth="3"
+    android:updatePeriodMillis="1800000"
+    android:widgetCategory="home_screen" />

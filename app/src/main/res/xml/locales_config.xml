@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Langues proposées par Android (choix de langue par application, 13+).
+     L'arabe est la langue par défaut : ses textes vivent dans res/values/. -->
+<locale-config xmlns:android="http://schemas.android.com/apk/res/android"
+    android:defaultLocale="ar">
+    <locale android:name="ar" />
+    <locale android:name="fr" />
+    <locale android:name="en" />
+</locale-config>

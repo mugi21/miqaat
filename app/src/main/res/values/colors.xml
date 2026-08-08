@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Fond de la fenêtre avant la première frame Compose, et fond de l'écran de
+         démarrage système (Android 12+). Le vert de la marque dans les deux modes :
+         c'est la même image que l'icône du lanceur, elle ne suit pas le mode sombre.
+         Doit rester synchronisé avec SplashGradient* (Color.kt) — c'est ce qui rend
+         la main à Compose sans coupure de couleur. -->
+    <color name="splash_background">#046A3B</color>
+
+    <!-- Palette du widget : le lanceur inflate nos RemoteViews dans SON processus,
+         donc les couleurs doivent être des ressources (résolues avec values-night)
+         et jamais des entiers calculés côté app. Reprend le schéma clair de Color.kt.
+         Les fonds sont volontairement translucides (canal alpha en tête) : le
+         fond d'écran doit transparaître. Les textes, eux, restent opaques. -->
+    <color name="widget_surface">#C7F5FBF4</color>
+    <color name="widget_outline">#40256C4A</color>
+    <color name="widget_mosaic_line">#1F256C4A</color>
+    <color name="widget_on_surface">#171D19</color>
+    <color name="widget_on_surface_variant">#404943</color>
+    <color name="widget_accent">#256C4A</color>
+    <color name="widget_accent_container">#CCAAF2CC</color>
+</resources>

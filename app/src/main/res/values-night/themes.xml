@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Variante nuit : seul le parent change (barres système sombres). Le fond
+         reste le vert de l'écran de démarrage, identique dans les deux modes.
+         `Theme.Miqaat` n'est pas redéclaré ici : il hérite de cette base-ci. -->
+    <style name="Base.Theme.Miqaat" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/splash_background</item>
+    </style>
+</resources>

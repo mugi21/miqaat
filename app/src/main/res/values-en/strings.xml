@@ -1,0 +1,146 @@
+<resources>
+    <string name="app_name">Miqaat</string>
+    <string name="app_tagline">Prayer times wherever you are, no Internet needed</string>
+    <string name="prayer_fajr">Fajr</string>
+    <string name="prayer_sunrise">Sunrise</string>
+    <string name="prayer_dhuhr">Dhuhr</string>
+    <string name="prayer_asr">Asr</string>
+    <string name="prayer_maghrib">Maghrib</string>
+    <string name="prayer_isha">Isha</string>
+    <string name="next_prayer_title">Next prayer</string>
+    <string name="tomorrow_fajr">Tomorrow\'s Fajr</string>
+    <string name="time_remaining">Time remaining</string>
+    <string name="section_today_times">Today\'s times</string>
+    <string name="notification_channel_name">Prayer times</string>
+    <string name="notification_channel_description">Notification when each prayer time begins</string>
+    <string name="notification_prayer_time">It is now time for %1$s prayer</string>
+    <string name="notification_call">Hayya \'ala-s-salah, hayya \'ala-l-falah</string>
+
+    <!-- Pre-adhan reminder -->
+    <string name="notification_reminder_channel_name">Reminder before the adhan</string>
+    <string name="notification_reminder_channel_description">Alert before a prayer time begins, with the lead time you choose</string>
+    <string name="notification_reminder_title">%1$s prayer is approaching</string>
+    <string name="notification_reminder_text">%1$s left before the adhan</string>
+    <plurals name="duration_minutes">
+        <item quantity="one">%d minute</item>
+        <item quantity="other">%d minutes</item>
+    </plurals>
+
+    <string name="action_back">Back</string>
+    <string name="action_close">Close</string>
+
+    <string name="settings_title">Settings</string>
+    <string name="settings_open">Open settings</string>
+    <string name="settings_cancel">Cancel</string>
+    <string name="settings_calc_method">Calculation method</string>
+    <string name="settings_madhab">School for Asr calculation</string>
+    <string name="settings_reminder">Reminder before the adhan</string>
+    <string name="settings_reminder_hint">Get a heads-up so you can get ready</string>
+    <string name="settings_reminder_lead">Reminder lead time</string>
+    <string name="settings_language">App language</string>
+    <string name="language_system">System language</string>
+    <!-- Each language is named in its own language: same value in all three files. -->
+    <string name="language_arabic">العربية</string>
+    <string name="language_french">Français</string>
+    <string name="language_english">English</string>
+    <string name="settings_adjustments">Manual time adjustments</string>
+    <string name="settings_adjustments_hint">To match your mosque\'s or country\'s timetable, in minutes</string>
+    <string name="settings_adjustments_none">No adjustment</string>
+    <string name="settings_adjustments_reset">Reset</string>
+    <string name="settings_adjustments_increase">Add one minute to %1$s</string>
+    <string name="settings_adjustments_decrease">Remove one minute from %1$s</string>
+    <string name="settings_hijri_offset">Hijri date adjustment</string>
+    <string name="settings_hijri_offset_hint">To match the local moon sighting</string>
+    <string name="settings_hijri_no_offset">No adjustment</string>
+    <string name="settings_hijri_increase">Add one day</string>
+    <string name="settings_hijri_decrease">Remove one day</string>
+    <string name="madhab_shafi">Majority (Shafi\'i, Maliki, Hanbali)</string>
+    <string name="madhab_hanafi">Hanafi</string>
+    <string name="method_mwl">Muslim World League</string>
+    <string name="method_egyptian">Egyptian General Authority of Survey</string>
+    <string name="method_karachi">University of Islamic Sciences, Karachi</string>
+    <string name="method_umm_al_qura">Umm al-Qura University (Makkah)</string>
+    <string name="method_dubai">Dubai (United Arab Emirates)</string>
+    <string name="method_moonsighting">Moonsighting Committee</string>
+    <string name="method_north_america">Islamic Society of North America (ISNA)</string>
+    <string name="method_kuwait">Kuwait</string>
+    <string name="method_qatar">Qatar</string>
+    <string name="method_singapore">Singapore</string>
+    <string name="method_turkey">Turkish Presidency of Religious Affairs</string>
+    <string name="method_auto_resolved">Automatic — %1$s</string>
+    <string name="method_algeria">Algeria (Ministry of Religious Affairs and Endowments)</string>
+    <string name="method_tunisia">Tunisia (Ministry of Religious Affairs)</string>
+    <string name="method_morocco">Morocco (Ministry of Endowments and Islamic Affairs)</string>
+    <string name="method_jordan">Jordan (Ministry of Endowments)</string>
+    <string name="method_france">France (Union of Islamic Organisations)</string>
+    <string name="method_russia">Russia (Spiritual Administration of Muslims)</string>
+    <string name="method_indonesia">Indonesia (Ministry of Religious Affairs)</string>
+    <string name="method_malaysia">Malaysia (JAKIM)</string>
+    <string name="method_portugal">Portugal (Islamic Community of Lisbon)</string>
+    <string name="method_gulf">Gulf region</string>
+
+    <!-- Qibla compass -->
+    <string name="qibla_title">Qibla</string>
+    <string name="qibla_open">Open the compass</string>
+    <string name="qibla_bearing_label">Qibla direction</string>
+    <string name="qibla_distance_label">Distance to the Kaaba</string>
+    <string name="qibla_distance_value">%1$s km</string>
+    <string name="qibla_turn_hint">Turn your phone until the Kaaba marker meets the pointer at the top</string>
+    <string name="qibla_aligned">You are facing the Qibla</string>
+    <string name="qibla_accuracy_warning">Compass accuracy is low — move your phone in a figure 8 to calibrate it</string>
+    <string name="qibla_no_compass">This device has no magnetic sensor — the angle below is measured from true north</string>
+    <string name="compass_north">N</string>
+    <string name="compass_east">E</string>
+    <string name="compass_south">S</string>
+    <string name="compass_west">W</string>
+
+    <!-- Monthly calendar -->
+    <string name="calendar_title">Calendar</string>
+    <string name="calendar_open">Open the calendar</string>
+    <string name="calendar_today">Today</string>
+    <string name="calendar_previous_month">Previous month</string>
+    <string name="calendar_next_month">Next month</string>
+
+    <!-- Ramadan times -->
+    <string name="ramadan_title">Fasting times</string>
+    <string name="ramadan_imsak">Imsak</string>
+    <string name="ramadan_imsak_hint">%1$s before Fajr</string>
+    <string name="ramadan_iftar">Iftar</string>
+    <string name="ramadan_iftar_hint">At the Maghrib adhan</string>
+    <string name="ramadan_fasting_duration">Fasting duration</string>
+    <string name="duration_hours_minutes">%1$d h %2$02d</string>
+
+    <!-- Adhkār and invocations -->
+    <string name="invocation_title">Invocations and adhkār</string>
+    <string name="invocation_open">Open adhkār</string>
+    <string name="invocation_add">Add an invocation</string>
+    <string name="invocation_edit">Edit</string>
+    <string name="invocation_delete">Delete</string>
+    <string name="invocation_save">Save</string>
+    <string name="invocation_empty">No invocations yet</string>
+    <string name="invocation_field_title">Title</string>
+    <string name="invocation_field_body">Text</string>
+    <string name="invocation_builtin_readonly">Text shipped with the app: only its timing can be changed</string>
+    <string name="invocation_schedule">Reminder time</string>
+    <string name="invocation_schedule_disabled">Reminder off</string>
+    <string name="invocation_mode_fixed">Fixed time</string>
+    <string name="invocation_mode_anchor">Tied to a prayer</string>
+    <string name="invocation_schedule_at">At %1$s</string>
+    <string name="invocation_schedule_at_prayer">At the %1$s adhan</string>
+    <string name="invocation_schedule_after">%2$s after %1$s</string>
+    <string name="invocation_schedule_before">%2$s before %1$s</string>
+    <string name="invocation_pick_time">Pick a time</string>
+    <string name="invocation_offset_increase">Move the reminder later</string>
+    <string name="invocation_offset_decrease">Move the reminder earlier</string>
+    <string name="invocation_guard_hint">A reminder falling too close to a prayer is delayed slightly, so that the adhan never is.</string>
+    <string name="invocation_morning_title">Morning adhkār</string>
+    <string name="invocation_evening_title">Evening adhkār</string>
+    <string name="notification_invocation_channel_name">Adhkār</string>
+    <string name="notification_invocation_channel_description">Reminders for invocations and adhkār at their time</string>
+    <string name="notification_invocation_title">Time for %1$s</string>
+    <string name="notification_invocation_text">Tap to read</string>
+
+    <!-- Home screen widget -->
+    <string name="widget_label">Miqaat — Next prayer</string>
+    <string name="widget_description">The next prayer, the time remaining and today\'s times on your home screen</string>
+</resources>

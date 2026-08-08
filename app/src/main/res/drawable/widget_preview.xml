@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Aperçu montré par les lanceurs d'avant Android 12 (les suivants utilisent
+     previewLayout, donc le vrai widget). -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@drawable/widget_background" />
+    <item
+        android:width="56dp"
+        android:height="56dp"
+        android:drawable="@drawable/ic_mosque"
+        android:gravity="center" />
+</layer-list>

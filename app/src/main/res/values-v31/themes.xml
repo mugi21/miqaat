@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      Écran de démarrage système (Android 12+). Depuis cette version, Android
+      affiche *toujours* un écran de démarrage au lancement : on ne peut pas le
+      supprimer, seulement l'habiller — d'où ce fichier plutôt qu'une dépendance
+      à androidx.core:core-splashscreen, qui ne servirait qu'à rétroporter une
+      API dont on n'a pas besoin (voir décision D28).
+
+      Par défaut il montre l'icône du lanceur, fond vert sur icône verte : illisible.
+      On lui donne donc l'avant-plan seul, blanc, sur le fond de la marque. Le relais
+      est ensuite pris par `ui/splash/SplashScreen` — même vert, même logo, mais avec
+      le nom et la baseline, que l'écran système ne sait pas afficher.
+
+      `Base.Theme.Miqaat` vient de values/ ou values-night/ selon le mode : c'est
+      lui qui porte le parent clair ou sombre.
+    -->
+    <style name="Theme.Miqaat" parent="Base.Theme.Miqaat">
+        <item name="android:windowSplashScreenBackground">@color/splash_background</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+    </style>
+</resources>
