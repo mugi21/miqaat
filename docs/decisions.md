@@ -424,3 +424,10 @@ composable pour le texte. Trois attributs XML coûtent moins qu'une librairie.
   compose et charge ses horaires pendant ce temps, et n'apparaît pas vide ;
 - `rememberSaveable` : un changement de langue recrée l'activité, il ne doit pas
   rejouer le démarrage.
+
+> **D20 — confirmé sur appareil (session 10).** Redmi Note 8, Android 10, avec un
+> lecteur de Coran en cours de lecture. `requestAudioFocus … req=2` →
+> `onAudioFocusChange(-2)` reçu par le lecteur 3 ms plus tard (il se met en pause)
+> → `AudioTrack stop: 496000 frames delivered`, soit 496000 ÷ 16 000 Hz = **31,0 s**,
+> l'adhan entier → `onAudioFocusChange(1)`, le lecteur **reprend seul**.
+> C'est exactement ce qu'un son laissé au canal de notification ne sait pas faire.
