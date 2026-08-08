@@ -51,7 +51,6 @@
     <string name="settings_adjustments_decrease">Remove one minute from %1$s</string>
     <string name="settings_hijri_offset">Hijri date adjustment</string>
     <string name="settings_hijri_offset_hint">To match the local moon sighting</string>
-    <string name="settings_hijri_no_offset">No adjustment</string>
     <string name="settings_hijri_increase">Add one day</string>
     <string name="settings_hijri_decrease">Remove one day</string>
     <string name="madhab_shafi">Majority (Shafi\'i, Maliki, Hanbali)</string>

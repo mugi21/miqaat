@@ -313,6 +313,14 @@ private fun adjustmentsSummary(adjustments: PrayerTimeAdjustments): String {
 private fun signedMinutes(minutes: Int): String = String.format(Locale.ROOT, "%+d", minutes)
 
 /**
+ * Valeur d'un stepper de jours : « 0 » sans décalage, « +1 » ou « -2 » sinon.
+ * Volontairement courte — une phrase dans cet emplacement déborderait dès que
+ * l'utilisateur agrandit la police, et se couperait au milieu d'un mot.
+ */
+private fun signedDays(days: Int): String =
+    if (days == 0) "0" else String.format(Locale.ROOT, "%+d", days)
+
+/**
  * Les six moments avec un pas de ±1 minute. Les valeurs s'appliquent aussitôt
  * (chaque pas replanifie l'alarme), donc le dialogue n'a qu'un bouton de
  * fermeture — et une remise à zéro tant qu'il y a quelque chose à effacer.
@@ -470,14 +478,14 @@ private fun HijriOffsetRow(offsetDays: Int, onChanged: (Int) -> Unit) {
             onClick = { onChanged(offsetDays - 1) },
         )
         Text(
-            text = if (offsetDays == 0) {
-                stringResource(R.string.settings_hijri_no_offset)
-            } else {
-                "%+d".format(offsetDays)
-            },
+            text = signedDays(offsetDays),
             style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.width(72.dp),
+            color = if (offsetDays == 0) {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            } else {
+                MaterialTheme.colorScheme.primary
+            },
+            modifier = Modifier.width(56.dp),
             textAlign = TextAlign.Center,
         )
         StepperButton(

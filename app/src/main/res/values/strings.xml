@@ -56,7 +56,6 @@
     <string name="settings_adjustments_decrease">إنقاص دقيقة من %1$s</string>
     <string name="settings_hijri_offset">تعديل التاريخ الهجري</string>
     <string name="settings_hijri_offset_hint">لمطابقة الرؤية المحلية للهلال</string>
-    <string name="settings_hijri_no_offset">بدون تعديل</string>
     <string name="settings_hijri_increase">زيادة يوم</string>
     <string name="settings_hijri_decrease">إنقاص يوم</string>
     <string name="madhab_shafi">الجمهور (الشافعي والمالكي والحنبلي)</string>

@@ -51,7 +51,6 @@
     <string name="settings_adjustments_decrease">Retirer une minute au %1$s</string>
     <string name="settings_hijri_offset">Ajustement de la date hégirienne</string>
     <string name="settings_hijri_offset_hint">Pour suivre l\'observation locale du croissant</string>
-    <string name="settings_hijri_no_offset">Aucun ajustement</string>
     <string name="settings_hijri_increase">Ajouter un jour</string>
     <string name="settings_hijri_decrease">Retirer un jour</string>
     <string name="madhab_shafi">Majorité (chaféite, malékite, hanbalite)</string>
