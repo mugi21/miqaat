@@ -131,11 +131,13 @@ private fun InvocationsList(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    // Insets avant verticalScroll : posés après, ils défileraient avec le contenu.
     Column(
         modifier = modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .statusBarsPadding(),
+            .statusBarsPadding()
+            .navigationBarsPadding()
+            .verticalScroll(rememberScrollState()),
     ) {
         ScreenHeader(title = stringResource(R.string.invocation_title), onBack = onBack)
 
@@ -191,11 +193,7 @@ private fun InvocationsList(
             Text(stringResource(R.string.invocation_add))
         }
 
-        Spacer(
-            Modifier
-                .height(24.dp)
-                .navigationBarsPadding(),
-        )
+        Spacer(Modifier.height(24.dp))
     }
 }
 

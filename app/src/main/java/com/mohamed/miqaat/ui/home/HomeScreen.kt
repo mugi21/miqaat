@@ -75,9 +75,13 @@ private fun HomeContent(
     modifier: Modifier = Modifier,
 ) {
     Box(modifier = modifier.fillMaxSize()) {
+        // Pas de statusBarsPadding ici : le héros peint volontairement son
+        // dégradé derrière la barre de statut et gère lui-même sa marge.
+        // L'inset du bas, lui, va avant verticalScroll — après, il défilerait.
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .navigationBarsPadding()
                 .verticalScroll(rememberScrollState()),
         ) {
             HeroSection(state = state)
@@ -95,11 +99,7 @@ private fun HomeContent(
                     .fillMaxWidth()
                     .padding(horizontal = 20.dp),
             )
-            Spacer(
-                Modifier
-                    .height(24.dp)
-                    .navigationBarsPadding(),
-            )
+            Spacer(Modifier.height(24.dp))
         }
         IconButton(
             onClick = onOpenSettings,

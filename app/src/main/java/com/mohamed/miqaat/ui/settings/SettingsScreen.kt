@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
@@ -141,11 +142,15 @@ private fun SettingsContent(
 ) {
     var openDialog by rememberSaveable { mutableStateOf(SettingsDialog.NONE) }
 
+    // Les insets s'appliquent *avant* verticalScroll : posés après, ils
+    // feraient partie du contenu qui défile et l'en-tête passerait sous la
+    // barre de statut dès le premier glissement.
     Column(
         modifier = modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .statusBarsPadding(),
+            .statusBarsPadding()
+            .navigationBarsPadding()
+            .verticalScroll(rememberScrollState()),
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -228,6 +233,8 @@ private fun SettingsContent(
                 )
             }
         }
+
+        Spacer(Modifier.height(24.dp))
     }
 
     when (openDialog) {

@@ -91,11 +91,13 @@ private fun QiblaContent(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    // Insets avant verticalScroll : posés après, ils défileraient avec le contenu.
     Column(
         modifier = modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .statusBarsPadding(),
+            .statusBarsPadding()
+            .navigationBarsPadding()
+            .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Row(
@@ -163,11 +165,7 @@ private fun QiblaContent(
             }
         }
 
-        Spacer(
-            Modifier
-                .height(24.dp)
-                .navigationBarsPadding(),
-        )
+        Spacer(Modifier.height(24.dp))
     }
 }
 
