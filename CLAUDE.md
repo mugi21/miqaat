@@ -74,7 +74,7 @@ et leurs raisons), `file-map.md` (carte des fichiers), `i18n.md` (multilingue).
 
 ## État actuel
 
-**Dernière mise à jour : 2026-08-08 (fin de session 10)**
+**Dernière mise à jour : 2026-08-08 (fin de session 11)**
 
 ### Fait (session 1)
 - Squelette Android Studio (AGP 9.2.1, Kotlin 2.2.10, Compose BOM 2026.02.01, minSdk 26, targetSdk 36)
@@ -236,7 +236,22 @@ Deux symptômes remontés sur un appareil Android 10 : le rappel restait **muet*
 - **D20 validé de bout en bout sur ce même appareil**, avec un lecteur de Coran (`my.smartech.mp3quran`) en train de jouer. Séquence relevée à la milliseconde : `requestAudioFocus … req=2` → le lecteur reçoit **`onAudioFocusChange(-2)`** (LOSS_TRANSIENT) 3 ms plus tard et se met en pause → `AudioTrack stop: **496000 frames delivered**` = 496000 ÷ 16 000 Hz = **31,0 s exactement**, l'adhan entier → le lecteur reçoit **`onAudioFocusChange(1)`** (GAIN) et **reprend tout seul**. C'était la moitié de D20 jamais confirmée depuis la session 7 : la mise en pause de la musique, impossible en laissant le son au canal de notification
 - Note bénigne observée : `NotificationService: Muting recently noisy … com.mohamed.miqaat|3` — Android étouffe la seconde émission de la notification (celle reprise en avant-plan par le service). Sans effet, le canal étant déjà muet ; à ne pas confondre avec un son perdu
 
+### Fait (session 11) — première release signée + correction des insets
+- **Signature des releases (décision D29)** : `app/build.gradle.kts` lit `keystore.properties` **s'il existe** ; sans lui, `assembleRelease` produit toujours un APK, non signé — le dépôt reste donc compilable par quiconque le clone, ce qui compte sous GPL. `*.jks`, `keystore.properties` gitignorés (vérifié à `git check-ignore` avant le commit), `keystore.properties.example` versionné. Signature **v2 + v3** : v1 ne sert qu'en dessous d'Android 7 (`minSdk 26`), v3 ouvre la rotation de clé — impossible à ajouter après publication
+- Clé RSA 4096 créée par l'utilisateur (`keytool`, mots de passe jamais manipulés ici). ⚠ **Refaite une fois** : le premier certificat portait `CN=Unknown` (champs laissés vides). Corrigé en `CN=Mohamed Boughouas, O=Miqaat, C=DZ` — l'identité du certificat est définitive dès la première publication, la chaîne de mises à jour en dépend
+- **`docs/release.md`** : procédure complète (clé, build, `apksigner verify`, empreinte SHA-256, tag, release GitHub) + les trois points à préparer si Google Play un jour (déclaration `USE_EXACT_ALARM`, politique de confidentialité, AAB)
+- **APK release 10,00 Mo**, R8 laissé désactivé pour cette première version (aucune règle proguard écrite ni éprouvée ; la ponctualité des alarmes prime sur quelques centaines de kilooctets)
+- **Bug d'insets corrigé sur six écrans (décision D30)** : `statusBarsPadding()` était déclaré **après** `verticalScroll()`, donc à l'intérieur du contenu qui défile — l'en-tête passait sous la barre de statut dès le premier glissement (invisible au repos, d'où un défaut intermittent). Et les marges basses, écrites `Spacer(Modifier.height(24.dp).navigationBarsPadding())`, n'ont **jamais** rien fait : `height()` à l'extérieur fixe la hauteur totale à 24dp. L'écran des réglages n'en avait aucune. Règle désormais : insets sur le conteneur, avant `verticalScroll` ; l'accueil reste l'exception (le héros peint derrière la barre de statut)
+- **Stepper hégirien** : `width(72.dp)` en dur sur la valeur → « Aucun ajustement » se coupait au milieu d'un mot **dès l'échelle de police par défaut**. Remplacé par une valeur courte (`0`, `+1`, `−2`), même largeur (56dp) et même code couleur que le stepper des ajustements manuels ; `settings_hijri_no_offset` retirée des trois langues
+- 79 tests JVM verts (inchangés) ; vérifié sur émulateur aux échelles de police **1,0 / 1,3 / 1,8** en navigation à trois boutons : contenu rogné sous la barre de statut au défilement, dégagé au-dessus des boutons du bas, stepper sur une seule ligne
+- **Vérifié sur appareil réel** (Redmi Note 8) : release installée, empreinte du `base.apk` comparée à celle du build — identiques
+- ⚠ **Piège de test rencontré** : le téléphone exécutait une build **debug** (`CN=Android Debug`, 15,4 Mo) installée par le bouton ▶ d'Android Studio, pas l'APK release. D'où un « rien n'a changé » trompeur. Debug et release portent le même `applicationId` : elles ne peuvent pas coexister et se remplacent silencieusement. **Toujours vérifier par l'empreinte** : `adb shell pm path <pkg>` puis `sha256sum` sur le `base.apk`, comparé au fichier compilé
+- Notes MIUI : `adb install` est refusé (`INSTALL_FAILED_USER_RESTRICTED`) tant que « Installation via USB » n'est pas activée dans les options développeur ; et `adb shell input` est refusé (`INJECT_EVENTS`) dès qu'une boîte de dialogue système a le focus
+
 ### Prochaine étape
+- **Publier la release v1.0** : merger sur `main`, taguer `v1.0`, créer la release GitHub avec l'APK et son empreinte (voir `docs/release.md`). `gh` n'est pas installé sur cette machine → passage par le formulaire web
+- Dette connue : la grille du calendrier rogne les quantièmes hégiriens **au-delà de l'échelle de police ~1,6** (à 1,3 tout tient). Même famille que D30 : une hauteur de case en dur
+- Envisager un `applicationIdSuffix = ".debug"` pour que build debug et release cohabitent sur l'appareil de test — au prix d'alarmes, widget et notifications dédoublés
 - Vérifier la boussole sur un appareil réel (l'émulateur ne simule pas utilement le magnétomètre)
 - Vérifier le widget posé sur l'écran d'accueil (clair/sombre, RTL, bascule à l'heure d'une prière)
 - ✅ Rappel **et** adhan vérifiés sur appareil (session 10), mise en pause de la musique comprise. Reste à contrôler le comportement en **mode vibreur et en silencieux** (le service applique lui-même la règle du `ringerMode`, jamais éprouvé)

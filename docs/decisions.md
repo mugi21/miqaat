@@ -431,3 +431,43 @@ composable pour le texte. Trois attributs XML coûtent moins qu'une librairie.
 > → `AudioTrack stop: 496000 frames delivered`, soit 496000 ÷ 16 000 Hz = **31,0 s**,
 > l'adhan entier → `onAudioFocusChange(1)`, le lecteur **reprend seul**.
 > C'est exactement ce qu'un son laissé au canal de notification ne sait pas faire.
+
+## D29 — La clé de signature vit hors du dépôt, et la release se compile sans elle
+
+`app/build.gradle.kts` lit `keystore.properties` **s'il existe** et n'ouvre un
+`signingConfigs` que dans ce cas. Conséquences voulues :
+
+- aucun secret ne traverse le dépôt (`*.jks` et `keystore.properties` sont
+  gitignorés, un `keystore.properties.example` documente les clés attendues) ;
+- `assembleRelease` réussit quand même sans la clé, en produisant un APK non
+  signé : quiconque clone le projet peut le compiler, ce qui compte pour un
+  logiciel sous GPL. Un `signingConfig` déclaré en dur ferait échouer leur build ;
+- signature en **v2 + v3**. v1 (JAR) ne sert qu'en dessous d'Android 7, or
+  `minSdk` vaut 26 ; v3 ouvre la rotation de clé, impossible à ajouter après coup.
+
+L'identité du certificat (`CN`, `O`, `C`) a été fixée **avant** la première
+publication : après, la changer romprait la chaîne de mises à jour, Android
+n'acceptant une mise à jour que signée par la même clé.
+
+La procédure complète vit dans [release.md](release.md).
+
+## D30 — Les insets système s'appliquent au conteneur, avant `verticalScroll`
+
+Une marge posée **après** `verticalScroll` dans la chaîne de modificateurs fait
+partie du contenu qui défile : elle remonte avec lui, et l'en-tête finit sous la
+barre de statut au premier glissement. Le défaut est invisible au repos, donc
+intermittent à l'usage — cinq écrans en souffraient.
+
+Symétriquement, `Modifier.height(24.dp).navigationBarsPadding()` sur un `Spacer`
+ne fait **rien** : `height()` étant à l'extérieur fixe la hauteur totale à 24dp,
+et la marge intérieure n'a aucun contenu à décaler.
+
+Règle : `.fillMaxSize().statusBarsPadding().navigationBarsPadding().verticalScroll(…)`.
+L'accueil est la seule exception — il omet `statusBarsPadding`, le dégradé du
+héros se prolongeant volontairement derrière la barre de statut, et `HeroSection`
+posant sa propre marge.
+
+Corollaire vérifié au passage : une dimension en dur ne suit pas l'échelle de
+police. Un `width(72.dp)` sur la valeur du stepper hégirien coupait
+« Aucun ajustement » au milieu d'un mot dès l'échelle par défaut — d'où une valeur
+courte (`0`, `+1`) dans cet emplacement.

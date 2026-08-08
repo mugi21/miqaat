@@ -49,6 +49,11 @@ Android Studio et un terminal normal ne sont pas concernés.
 - Un écran (`XxxScreen`) reçoit son état du ViewModel ; les composables enfants
   reçoivent des données simples, jamais le ViewModel.
 - Compose : `start`/`end`, jamais `left`/`right` — le RTL doit marcher tout seul.
+- Compose : les insets système (`statusBarsPadding`, `navigationBarsPadding`) se
+  posent sur le conteneur **avant** `verticalScroll`. Après, ils défilent avec le
+  contenu et ne protègent plus rien (voir [decisions.md](decisions.md) D30).
+- Compose : pas de largeur ni de hauteur en dur autour d'un texte — elle ne suit
+  pas l'échelle de police du système, et le texte se coupe au milieu d'un mot.
 - Aucun texte en dur dans un composable : tout passe par `strings.xml`
   (voir [i18n.md](i18n.md)).
 - Couleurs : toujours `MaterialTheme.colorScheme.*`, jamais de `Color(0xFF…)` dans
