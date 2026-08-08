@@ -11,6 +11,8 @@
 
 APK : `app/build/outputs/apk/debug/app-debug.apk`.
 
+Pour compiler et publier une version signée, voir [release.md](release.md).
+
 ### Build lancé depuis Claude Code (cette machine uniquement)
 
 Les sockets AF_UNIX sont bloquées → le JDK ≥ 16 échoue (« Unable to establish
