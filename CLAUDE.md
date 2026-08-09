@@ -272,12 +272,12 @@ Retour d'appareil : **aucune notification n'arrivait** sur le Redmi Note 8 (Andr
 - Réglages : ligne « نمط التنبيه / Mode d'alerte » (dialogue radio à quatre entrées, sous-titre) + ligne « Fiabilité des notifications » ; `SettingRow` gagne un `subtitle` optionnel
 - **31 clés nouvelles** dans les trois `strings.xml` ; `MainActivity.Screen` passe à six entrées
 - **108 tests JVM verts** (29 nouveaux : matrice 12 cases + invariants, garde de fraîcheur dont le verrou rappel < délai minimal, parsing du mode, verdict de fiabilité dont la règle anti-harcèlement) ; `assembleDebug` OK
-- **Pas encore vérifié sur appareil** — c'est l'étape suivante, et c'est là que se joue le chantier 1
+- **Vérifié sur le Redmi Note 8** : release signée installée par-dessus la précédente (même clé, aucune donnée perdue), l'utilisateur confirme que les notifications arrivent. Restent à éprouver dans la durée le verdict `DELIVERY` sur une nuit entière et la matrice complète du mode d'alerte (voir « Prochaine étape »)
 
 ### Prochaine étape
 - **Vérifier sur le Redmi Note 8** (voir `docs/reliability.md`) : ① installer sans rien régler, laisser une nuit → rien n'arrive et `DELIVERY = à corriger` + bannière ; ② suivre les actions de l'écran (autostart, batterie sans restriction) ; ③ nouvelle nuit → les cinq adhans arrivent ; ④ **non-régression du symptôme** : après une nuit sans réglage MIUI, ouvrir l'app à 14h ne doit produire **aucune** notification « approche du Fajr » ; ⑤ `dumpsys package … | grep stopped`
 - Éprouver le mode d'alerte sur appareil avec le bouton « notification de test » : 4 modes × 3 états de sonnerie × (adhan, rappel, invocation), en vérifiant **quel curseur de volume** agit (sonnerie vs alarme), puis les trois filtres DND
-- **Publier la release v1.0** : merger sur `main`, taguer `v1.0`, créer la release GitHub avec l'APK et son empreinte (voir `docs/release.md`). `gh` n'est pas installé sur cette machine → passage par le formulaire web. ⚠ Note de version : le bump des canaux efface les personnalisations que l'utilisateur aurait faites dessus
+- ✅ **Release v1.1 publiée** (`versionCode 2`) : `v1.0` était déjà taguée et publiée sur le commit initial du 8 août, tout le reste — sessions 11 et 12 — attendait. `gh` n'est pas installé sur cette machine → la release GitHub passe par le formulaire web, les notes de version sont préparées dans `docs/release-notes-v1.1.md`
 - Dette connue : la grille du calendrier rogne les quantièmes hégiriens **au-delà de l'échelle de police ~1,6** (à 1,3 tout tient). Même famille que D30 : une hauteur de case en dur
 - Envisager un `applicationIdSuffix = ".debug"` pour que build debug et release cohabitent sur l'appareil de test — au prix d'alarmes, widget et notifications dédoublés
 - Vérifier la boussole sur un appareil réel (l'émulateur ne simule pas utilement le magnétomètre)
