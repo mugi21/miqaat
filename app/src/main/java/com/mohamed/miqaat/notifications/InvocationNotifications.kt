@@ -14,8 +14,11 @@ import com.mohamed.miqaat.ui.displayTitle
 
 /**
  * La notification d'une invocation. Volontairement séparée de
- * [PrayerNotifications] : son canal garde le son du système et rien n'est joué
- * par [PrayerSoundService] (voir D27).
+ * [PrayerNotifications] : elle porte le texte du dhikr et ouvre l'écran de
+ * lecture, là où celle d'une prière annonce une heure.
+ *
+ * Depuis D39, elle suit le même mode d'alerte que les prières et son son est
+ * joué par [AlertSoundService] — celui du système, faute d'enregistrement livré.
  *
  * Un appui ouvre l'invocation dans l'application, prête à être lue.
  */

@@ -18,6 +18,13 @@
          (Android 14+) correspond au cas : quelques dizaines de secondes de son. -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SHORT_SERVICE" />
+    <!-- Vibrer nous-mêmes : depuis le réglage « mode d'alerte », la vibration
+         n'est plus déléguée au canal de notification (D38). -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- Demander l'exclusion de l'optimisation de batterie. Refusée par Google
+         Play sauf cas listés, mais l'application est distribuée hors Play
+         (GPL, releases GitHub) — voir D35. -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <!-- Position approximative : suffisante pour les horaires (précision « ville »),
          un seul fix ponctuel, jamais en arrière-plan -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
@@ -27,6 +34,21 @@
     <uses-feature
         android:name="android.hardware.sensor.compass"
         android:required="false" />
+
+    <!-- Écran de fiabilité : sans ces déclarations, `resolveActivity` renvoie null
+         sur Android 11+ (filtrage de visibilité des paquets) et l'on ne saurait
+         pas si l'écran de démarrage automatique de la surcouche existe.
+         Volontairement une liste nominative plutôt que QUERY_ALL_PACKAGES. -->
+    <queries>
+        <package android:name="com.miui.securitycenter" />
+        <package android:name="com.huawei.systemmanager" />
+        <package android:name="com.coloros.safecenter" />
+        <package android:name="com.oppo.safe" />
+        <package android:name="com.vivo.permissionmanager" />
+        <package android:name="com.iqoo.secure" />
+        <package android:name="com.samsung.android.lool" />
+        <package android:name="com.oneplus.security" />
+    </queries>
 
     <application
         android:name=".MiqaatApp"
@@ -59,11 +81,12 @@
             android:name=".notifications.PrayerAlarmReceiver"
             android:exported="false" />
 
-        <!-- Lecture de l'adhan / du rappel, avec focus audio (met la musique en pause).
-             Démarré depuis le receiver d'alarme exacte, cas exempté de l'interdiction
-             de lancer un service d'avant-plan depuis l'arrière-plan. -->
+        <!-- Lecture de l'adhan, du rappel ou d'une invocation, avec focus audio
+             (met la musique en pause). Démarré depuis le receiver d'alarme exacte,
+             cas exempté de l'interdiction de lancer un service d'avant-plan
+             depuis l'arrière-plan. -->
         <service
-            android:name=".notifications.PrayerSoundService"
+            android:name=".notifications.AlertSoundService"
             android:exported="false"
             android:foregroundServiceType="shortService" />
 
@@ -82,13 +105,22 @@
                 android:resource="@xml/widget_next_prayer_info" />
         </receiver>
 
+        <!-- exported="true" : toutes ces actions sont des diffusions protégées, que
+             seul le système peut émettre — aucune application tierce ne peut les
+             forger, et le receiver ignore tout ce qui ne figure pas dans sa liste.
+             En contrepartie, on peut enfin le viser depuis `adb` sans root, ce qui
+             rend la replanification vérifiable (D32). MY_PACKAGE_REPLACED et non
+             PACKAGE_REPLACED : le second exigerait un <data> et vaudrait pour
+             toutes les applications du téléphone. -->
         <receiver
             android:name=".notifications.RescheduleReceiver"
-            android:exported="false">
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.TIME_SET" />
                 <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED" />
             </intent-filter>
         </receiver>
     </application>

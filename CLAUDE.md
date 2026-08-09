@@ -17,7 +17,7 @@ Application Android native de temps de prière (Salat) :
 | **Android natif (Kotlin)** plutôt que Flutter | Fiabilité des alarmes exactes (`AlarmManager`) et des notifications en arrière-plan — critique pour une app de prière, mal supporté par les frameworks cross-platform |
 | **Jetpack Compose + Material 3** | UI déclarative moderne, standard actuel d'Android ; excellent support RTL natif |
 | **Adhan** (`com.batoulapps.adhan:adhan2`, batoulapps/adhan-kotlin) | Calcul astronomique des temps de prière 100 % local, aucun appel réseau, librairie de référence maintenue |
-| **AlarmManager (alarmes exactes) + WorkManager** | AlarmManager `setExactAndAllowWhileIdle` pour la ponctualité même en Doze ; WorkManager pour replanifier (reboot, changement de jour) |
+| **AlarmManager seul** (alarmes exactes) | `setExactAndAllowWhileIdle` pour la ponctualité même en Doze ; la chaîne se replanifie elle-même, et une seconde alarme inexacte sert de chien de garde. **Pas de WorkManager** : travail déférable, donc incapable de garantir la ponctualité — voir D33 |
 | **Room** | Stockage local : paramètres, cache des coordonnées, futur tracker de prières |
 | **MVVM + ViewModel + StateFlow** | Architecture standard Android, testable, survit aux rotations |
 | `minSdk 26` | java.time et `HijrahDate` disponibles nativement ; couvre ~95 % du parc |
@@ -69,12 +69,14 @@ Multilingue (FR/AR/EN) · sons d'adhan personnalisés · statistiques
 
 Depuis la session 5, `docs/` complète ce fichier — voir [docs/INDEX.md](docs/INDEX.md) :
 `dev-workflow.md` (build, rituel, conventions), `decisions.md` (choix d'architecture
-et leurs raisons), `file-map.md` (carte des fichiers), `i18n.md` (multilingue).
+et leurs raisons), `file-map.md` (carte des fichiers), `i18n.md` (multilingue),
+`notifications.md` (chaîne, canaux, mode d'alerte), `reliability.md` (pourquoi
+l'adhan n'arrive pas et comment le réparer).
 `CLAUDE.md` reste la mémoire vivante : vision, stack, roadmap, État actuel.
 
 ## État actuel
 
-**Dernière mise à jour : 2026-08-08 (fin de session 11)**
+**Dernière mise à jour : 2026-08-09 (fin de session 12)**
 
 ### Fait (session 1)
 - Squelette Android Studio (AGP 9.2.1, Kotlin 2.2.10, Compose BOM 2026.02.01, minSdk 26, targetSdk 36)
@@ -167,7 +169,7 @@ et leurs raisons), `file-map.md` (carte des fichiers), `i18n.md` (multilingue).
 Deux symptômes remontés sur un appareil Android 10 : le rappel restait **muet**, et l'adhan **ne mettait pas la musique en pause**. Même racine : on déléguait le son au lecteur de notifications du système, qui ne demande jamais le focus audio (donc ne peut pas interrompre un lecteur) et dont plusieurs surcouches ignorent le son personnalisé d'un canal. Décision **D20** :
 - **`notifications/PrayerSoundService.kt`** : service en avant-plan (type `shortService`) qui demande `AUDIOFOCUS_GAIN_TRANSIENT` — les lecteurs en cours se mettent en pause et **reprennent seuls** après — puis joue la ressource avec un `MediaPlayer`. Pas de `MediaPlayer` dans le receiver : son processus peut être tué dès `onReceive` terminé, ce qui couperait l'adhan de 31 s. Démarrer un service d'avant-plan depuis un receiver d'**alarme exacte** fait partie des cas exemptés
 - **`notifications/PrayerNotifications.kt`** : point unique de construction (id, canal, son, contenu traduit), partagé par le receiver et le service
-- **Canaux muets** (`setSound(null, null)`) sinon double son → IDs bumpés en **`prayer_times_v3`** et **`prayer_reminder_v2`** (les anciens sont supprimés). La **vibration reste au canal**, donc Android suit tout seul le mode du téléphone ; le service applique la même règle au son via `AudioManager.ringerMode`
+- **Canaux muets** (`setSound(null, null)`) sinon double son → IDs bumpés en **`prayer_times_v3`** et **`prayer_reminder_v2`** (les anciens sont supprimés). La **vibration reste au canal**, donc Android suit tout seul le mode du téléphone ; le service applique la même règle au son via `AudioManager.ringerMode` *(dépassé en session 12 : l'app reprend aussi la vibration — voir D38)*
 - La notification est posée par le receiver **avant** le service, puis reprise en avant-plan et détachée (`STOP_FOREGROUND_DETACH`) : si le système refuse le service, l'utilisateur est prévenu quand même
 - Manifest : `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_SHORT_SERVICE`, `<service … foregroundServiceType="shortService">`
 - ⚠ `ServiceCompat.startForeground` avec type exige core-ktx ≥ 1.12 (le projet est en 1.10.1) → branchement manuel sur `Build.VERSION_CODES.UPSIDE_DOWN_CAKE`
@@ -248,14 +250,39 @@ Deux symptômes remontés sur un appareil Android 10 : le rappel restait **muet*
 - ⚠ **Piège de test rencontré** : le téléphone exécutait une build **debug** (`CN=Android Debug`, 15,4 Mo) installée par le bouton ▶ d'Android Studio, pas l'APK release. D'où un « rien n'a changé » trompeur. Debug et release portent le même `applicationId` : elles ne peuvent pas coexister et se remplacent silencieusement. **Toujours vérifier par l'empreinte** : `adb shell pm path <pkg>` puis `sha256sum` sur le `base.apk`, comparé au fichier compilé
 - Notes MIUI : `adb install` est refusé (`INSTALL_FAILED_USER_RESTRICTED`) tant que « Installation via USB » n'est pas activée dans les options développeur ; et `adb shell input` est refusé (`INJECT_EVENTS`) dès qu'une boîte de dialogue système a le focus
 
+### Fait (session 12) — fiabilité des notifications + mode d'alerte
+Retour d'appareil : **aucune notification n'arrivait** sur le Redmi Note 8 (Android 10 / MIUI), et l'ouverture de l'app vers 14h faisait apparaître la notification « approche du Fajr » — l'alarme de 4h délivrée dix heures plus tard, au redémarrage du processus. Deux défauts distincts, deux chantiers.
+
+**Chantier 1 — la délivrance**
+- **`domain/AlarmFreshness.kt` (décision D31)** : le scheduler transmet `EXTRA_TRIGGER_AT`, le receiver le compare à l'heure réelle. Tolérances 20 min (adhan) / **5 min** (rappel) / 30 min (invocation). Les 5 min ne sont pas arbitraires : strictement sous `LEAD_CHOICES.min()` (10 min), sinon un rappel périmé s'afficherait **après** son adhan — un test verrouille l'inégalité. Extra absent (alarme d'une version antérieure) = frais ; déclenchement en avance = frais
+- `PrayerAlarmReceiver` : tout le travail dans un `try` / `scheduleNext()` dans un **`finally`** — la chaîne se replanifie même sur évènement périmé, sans permission de notification, ou après exception. `runCatching` sur la pose d'alarme avec repli inexact (une surcouche peut refuser l'exacte malgré la permission). **Pas de `goAsync()`** : le droit de démarrer un service d'avant-plan tient à l'allowlist accordée *pendant* `onReceive`
+- **`RescheduleReceiver` (D32)** : `exported="true"` + `MY_PACKAGE_REPLACED` + `SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED` + action maison du chien de garde. ⚠ `exported="false"` **fonctionnait** (vérifié session 2) — le vrai correctif ici est `MY_PACKAGE_REPLACED` : Android annule les alarmes d'un paquet remplacé, donc **chaque mise à jour tuait la chaîne** silencieusement, depuis toujours
+- **Chien de garde (D33)** : seconde alarme `setInexactRepeating` semi-quotidienne (`requestCode 1003`) vers `RescheduleReceiver`. **WorkManager écarté** — dépendance de plus, travail déférable donc incapable de tenir la promesse de ponctualité, et gelé par MIUI comme le reste ; la ligne « AlarmManager + WorkManager » de la table de stack, jamais implémentée depuis la session 1, est **corrigée**. Le filet ne répare pas MIUI : il répare la rupture de chaîne
+- **Écran « Fiabilité des notifications » (D34, D35)** : `domain/reliability/` (verdict, testable) + `data/reliability/` (`ReliabilityLog` en SharedPreferences, `ReliabilityInspector`, `OemAutostart`) + `ui/reliability/` (écran, ViewModel, bannière). Cinq contrôles : notifications, alarmes exactes (sans objet hors Android 12/12L, `USE_EXACT_ALARM` étant accordée d'office au-delà), batterie, démarrage automatique OEM, et **délivrance réelle** — seul détecteur automatique du gel, via l'horodatage du receiver. Bouton « notification de test », prochaine alerte, dernière reçue. Réévalué à chaque `ON_RESUME`
+- **Règle anti-harcèlement** verrouillée par test : `UNKNOWN` ne déclenche **jamais** la bannière (l'autostart MIUI est illisible ; sinon tout possesseur de Xiaomi aurait un avertissement inextinguible). Bannière sur critique + certain seulement, report 14 jours, jamais de modale au lancement
+- ⚠ `OemAutostart` exige **trois** précautions : bloc `<queries>` au manifeste (sans lui `resolveActivity` renvoie `null` sur Android 11+), `resolveActivity` (les noms changent selon la version de surcouche), et `try/catch` vers le texte manuel
+
+**Chantier 2 — le mode d'alerte** (`domain/NotificationAlert.kt`, D36 → D39)
+- `NotificationMode { FOLLOW_PHONE, ALWAYS_SOUND, ALWAYS_VIBRATE, SILENT }`, défaut « suivre le téléphone ». `AlertResolver` croise le mode et le `RingerState` → `AlertDecision(stream: AlertStream?, vibration: VibrationStyle)`. `stream` nullable et non doublé d'un booléen : l'état « je ne joue pas mais voici mon flux » devient inconstructible. Les **12 cases** de la matrice ont chacune leur assertion
+- **Flux audio (D37)** : `USAGE_NOTIFICATION_RINGTONE` par défaut → volume de la **sonnerie d'appel** (ce que l'utilisateur demandait) ; `USAGE_ALARM` quand le son est forcé → non muté par le ringer mode. `ALWAYS_SOUND` n'emprunte le flux alarme que lorsqu'il le faut. DND : « alarmes seulement » laisse passer le forçage, « silence total » gagne toujours (contourner exigerait `ACCESS_NOTIFICATION_POLICY`, non demandée)
+- **Vibration reprise par l'app (D38)** : les **trois** canaux passent muets *et* sans vibration → nouveaux IDs `prayer_times_v4`, `prayer_reminder_v3`, `invocations_v2`, anciens ajoutés à `OLD_IDS`. La vibration part du **receiver** et non du service : un `VibrationEffect` fini est confié au service système et survit à la mort du processus. Motifs courts (0,4 s / ~3 s), jamais indexés sur les 31 s de l'adhan. Attribut `USAGE_ALARM` indispensable, sinon le système la supprime comme une vibration de notification
+- Effet de bord : en vibreur ou silencieux, **plus aucun service d'avant-plan n'est démarré**. `PrayerSoundService` → **`AlertSoundService`** (il sert les trois natures d'alerte ; renommage sans risque, aucune `PendingIntent` ne pointe sur un service, contrairement au receiver). `onTimeout()` ajouté (`shortService` limité à ~3 min sur Android 14+)
+- **D27 renversée (D39)** : les adhkār suivent le mode d'alerte. Leur son reste `DEFAULT_NOTIFICATION_URI`, simplement joué par nous ; focus `..._MAY_DUCK` et non `TRANSIENT` (quelques secondes ne justifient pas d'interrompre une lecture). Perdu : le choix d'un son différent depuis Android. Gagné : un réglage unique pour tout ce que l'app émet
+- **Troisième instantané** dans `SettingsRepository` (`NotificationSettings`, clé `notification_mode`) plutôt qu'une extension de `ReminderSettings` — celui-ci est une entrée des resolvers, y glisser un réglage de rendu ferait trimballer une donnée inutile à toute la planification. ⚠ `cache()` doit rafraîchir les **trois** instantanés : en oublier un le rendrait périmé pour le receiver, qui tourne souvent dans un processus neuf où aucun Flow n'a émis
+- Réglages : ligne « نمط التنبيه / Mode d'alerte » (dialogue radio à quatre entrées, sous-titre) + ligne « Fiabilité des notifications » ; `SettingRow` gagne un `subtitle` optionnel
+- **31 clés nouvelles** dans les trois `strings.xml` ; `MainActivity.Screen` passe à six entrées
+- **108 tests JVM verts** (29 nouveaux : matrice 12 cases + invariants, garde de fraîcheur dont le verrou rappel < délai minimal, parsing du mode, verdict de fiabilité dont la règle anti-harcèlement) ; `assembleDebug` OK
+- **Pas encore vérifié sur appareil** — c'est l'étape suivante, et c'est là que se joue le chantier 1
+
 ### Prochaine étape
-- **Publier la release v1.0** : merger sur `main`, taguer `v1.0`, créer la release GitHub avec l'APK et son empreinte (voir `docs/release.md`). `gh` n'est pas installé sur cette machine → passage par le formulaire web
+- **Vérifier sur le Redmi Note 8** (voir `docs/reliability.md`) : ① installer sans rien régler, laisser une nuit → rien n'arrive et `DELIVERY = à corriger` + bannière ; ② suivre les actions de l'écran (autostart, batterie sans restriction) ; ③ nouvelle nuit → les cinq adhans arrivent ; ④ **non-régression du symptôme** : après une nuit sans réglage MIUI, ouvrir l'app à 14h ne doit produire **aucune** notification « approche du Fajr » ; ⑤ `dumpsys package … | grep stopped`
+- Éprouver le mode d'alerte sur appareil avec le bouton « notification de test » : 4 modes × 3 états de sonnerie × (adhan, rappel, invocation), en vérifiant **quel curseur de volume** agit (sonnerie vs alarme), puis les trois filtres DND
+- **Publier la release v1.0** : merger sur `main`, taguer `v1.0`, créer la release GitHub avec l'APK et son empreinte (voir `docs/release.md`). `gh` n'est pas installé sur cette machine → passage par le formulaire web. ⚠ Note de version : le bump des canaux efface les personnalisations que l'utilisateur aurait faites dessus
 - Dette connue : la grille du calendrier rogne les quantièmes hégiriens **au-delà de l'échelle de police ~1,6** (à 1,3 tout tient). Même famille que D30 : une hauteur de case en dur
 - Envisager un `applicationIdSuffix = ".debug"` pour que build debug et release cohabitent sur l'appareil de test — au prix d'alarmes, widget et notifications dédoublés
 - Vérifier la boussole sur un appareil réel (l'émulateur ne simule pas utilement le magnétomètre)
 - Vérifier le widget posé sur l'écran d'accueil (clair/sombre, RTL, bascule à l'heure d'une prière)
-- ✅ Rappel **et** adhan vérifiés sur appareil (session 10), mise en pause de la musique comprise. Reste à contrôler le comportement en **mode vibreur et en silencieux** (le service applique lui-même la règle du `ringerMode`, jamais éprouvé)
-- Vérifier que les alarmes tiennent **app fermée** sur ce Redmi (MIUI tue agressivement l'arrière-plan) : démarrage automatique activé + batterie « aucune restriction », puis un adhan attendu sans rouvrir l'app
+- ✅ Rappel **et** adhan vérifiés sur appareil (session 10), mise en pause de la musique comprise. Le comportement en vibreur et en silencieux relève désormais du mode d'alerte (session 12), à éprouver avec la notification de test
 - Vérifier l'icône sur un lanceur tiers et en **icône thématisée** (Android 13+, `monochrome`) — l'émulateur n'a montré que le lanceur Pixel
 - Vérifier le calendrier sur appareil : navigation entre mois, RTL, clair/sombre, encart Ramadan
 - Vérifier l'ajustement manuel sur appareil : un pas doit décaler l'accueil, le calendrier, le widget **et** l'heure de l'alarme système

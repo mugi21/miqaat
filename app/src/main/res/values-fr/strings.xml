@@ -139,6 +139,37 @@
     <string name="notification_invocation_title">C\'est l\'heure : %1$s</string>
     <string name="notification_invocation_text">Appuyez pour lire</string>
 
+    <!-- Mode d'alerte -->
+    <string name="settings_notification_mode">Mode d\'alerte</string>
+    <string name="settings_notification_mode_hint">Vaut pour l\'adhan, le rappel et les adhkār</string>
+    <string name="notification_mode_follow_phone">Suivre le mode du téléphone</string>
+    <string name="notification_mode_always_sound">Toujours sonner</string>
+    <string name="notification_mode_always_vibrate">Toujours vibrer</string>
+    <string name="notification_mode_silent">Toujours silencieux</string>
+
+    <!-- Fiabilité des notifications -->
+    <string name="settings_reliability">Fiabilité des notifications</string>
+    <string name="settings_reliability_hint">Si les notifications de prière n\'arrivent pas</string>
+    <string name="reliability_intro">Pour que l\'adhan arrive à l\'heure, application fermée, vérifiez ces points.</string>
+    <string name="reliability_action_fix">Corriger</string>
+    <string name="reliability_state_ok">En ordre</string>
+    <string name="reliability_state_action">À corriger</string>
+    <string name="reliability_state_unknown">Inconnu</string>
+    <string name="reliability_notifications">Autoriser les notifications</string>
+    <string name="reliability_exact_alarms">Alarmes exactes</string>
+    <string name="reliability_battery">Exclure de l\'optimisation batterie</string>
+    <string name="reliability_autostart">Démarrage automatique</string>
+    <string name="reliability_autostart_hint">Certains appareils (Xiaomi, Huawei, Oppo, Vivo, Samsung) gèlent les applications fermées : l\'adhan n\'arrive alors jamais. Activez le démarrage automatique et levez les restrictions de batterie.</string>
+    <string name="reliability_autostart_manual">Ouvrez Réglages → Applications → Miqaat et activez le démarrage automatique.</string>
+    <string name="reliability_autostart_done">C\'est fait</string>
+    <string name="reliability_delivery">Réception des alertes</string>
+    <string name="reliability_next_alarm">Prochaine alerte : %1$s</string>
+    <string name="reliability_last_delivered">Dernière alerte reçue : %1$s</string>
+    <string name="reliability_never_delivered">Aucune alerte reçue pour l\'instant</string>
+    <string name="reliability_test">Notification de test</string>
+    <string name="home_reliability_warning">Les notifications de prière risquent de ne pas arriver</string>
+    <string name="action_later">Plus tard</string>
+
     <!-- Widget de l'écran d'accueil -->
     <string name="widget_label">Miqaat — Prochaine prière</string>
     <string name="widget_description">La prochaine prière, le temps restant et les horaires du jour sur votre écran d\'accueil</string>

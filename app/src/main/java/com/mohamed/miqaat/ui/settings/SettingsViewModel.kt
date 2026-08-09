@@ -8,6 +8,8 @@ import com.mohamed.miqaat.data.settings.SettingsRepository
 import com.mohamed.miqaat.domain.AutoMethodResolver
 import com.mohamed.miqaat.domain.model.CalculationSettings
 import com.mohamed.miqaat.domain.model.MethodOption
+import com.mohamed.miqaat.domain.model.NotificationMode
+import com.mohamed.miqaat.domain.model.NotificationSettings
 import com.mohamed.miqaat.domain.model.PrayerName
 import com.mohamed.miqaat.domain.model.ReminderSettings
 import kotlinx.coroutines.flow.SharingStarted
@@ -30,6 +32,13 @@ class SettingsViewModel(
 
     val reminder: StateFlow<ReminderSettings> = repository.reminderFlow
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), repository.currentReminder())
+
+    val notification: StateFlow<NotificationSettings> = repository.notificationFlow
+        .stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5_000),
+            repository.currentNotification(),
+        )
 
     /**
      * Méthode que le mode automatique appliquerait ici — pour l'afficher
@@ -55,6 +64,14 @@ class SettingsViewModel(
     fun setReminderEnabled(enabled: Boolean) = update { repository.setReminderEnabled(enabled) }
 
     fun setReminderLead(minutes: Int) = update { repository.setReminderLeadMinutes(minutes) }
+
+    /**
+     * Seul réglage qui ne change aucun horaire — il passe quand même par [update],
+     * donc par une replanification inutile mais inoffensive : un chemin unique
+     * vaut mieux qu'un cas particulier de plus.
+     */
+    fun setNotificationMode(mode: NotificationMode) =
+        update { repository.setNotificationMode(mode) }
 
     private fun update(block: suspend () -> Unit) {
         viewModelScope.launch {

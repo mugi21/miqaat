@@ -150,6 +150,37 @@
     <string name="invocation_morning_body" translatable="false">آية الكرسي:\nاللهُ لا إلهَ إلا هو الحيُّ القيّوم، لا تأخذه سِنةٌ ولا نوم، له ما في السماوات وما في الأرض، من ذا الذي يشفع عنده إلا بإذنه، يعلم ما بين أيديهم وما خلفهم، ولا يحيطون بشيء من علمه إلا بما شاء، وسِع كرسيُّه السماوات والأرض، ولا يؤوده حفظهما، وهو العليُّ العظيم.\n\nالمعوّذات:\nقراءة سورة الإخلاص والفلق والناس، ثلاث مرات.\n\nأصبحنا وأصبح الملك لله، والحمد لله، لا إله إلا الله وحده لا شريك له، له الملك وله الحمد وهو على كل شيء قدير. ربِّ أسألك خير ما في هذا اليوم وخير ما بعده، وأعوذ بك من شر ما في هذا اليوم وشر ما بعده.\n\nاللهم بك أصبحنا، وبك أمسينا، وبك نحيا، وبك نموت، وإليك النشور.\n\nسيّد الاستغفار:\nاللهم أنت ربي لا إله إلا أنت، خلقتني وأنا عبدك، وأنا على عهدك ووعدك ما استطعت، أعوذ بك من شر ما صنعت، أبوء لك بنعمتك عليّ، وأبوء بذنبي فاغفر لي، فإنه لا يغفر الذنوب إلا أنت.\n\nرضيت بالله ربًّا، وبالإسلام دينًا، وبمحمد صلى الله عليه وسلم نبيًّا. (ثلاث مرات)\n\nبسم الله الذي لا يضرّ مع اسمه شيء في الأرض ولا في السماء، وهو السميع العليم. (ثلاث مرات)\n\nحسبي الله لا إله إلا هو، عليه توكلت، وهو ربّ العرش العظيم. (سبع مرات)\n\nسبحان الله وبحمده. (مائة مرة)</string>
     <string name="invocation_evening_body" translatable="false">آية الكرسي:\nاللهُ لا إلهَ إلا هو الحيُّ القيّوم، لا تأخذه سِنةٌ ولا نوم، له ما في السماوات وما في الأرض، من ذا الذي يشفع عنده إلا بإذنه، يعلم ما بين أيديهم وما خلفهم، ولا يحيطون بشيء من علمه إلا بما شاء، وسِع كرسيُّه السماوات والأرض، ولا يؤوده حفظهما، وهو العليُّ العظيم.\n\nالمعوّذات:\nقراءة سورة الإخلاص والفلق والناس، ثلاث مرات.\n\nأمسينا وأمسى الملك لله، والحمد لله، لا إله إلا الله وحده لا شريك له، له الملك وله الحمد وهو على كل شيء قدير. ربِّ أسألك خير ما في هذه الليلة وخير ما بعدها، وأعوذ بك من شر ما في هذه الليلة وشر ما بعدها.\n\nاللهم بك أمسينا، وبك أصبحنا، وبك نحيا، وبك نموت، وإليك المصير.\n\nسيّد الاستغفار:\nاللهم أنت ربي لا إله إلا أنت، خلقتني وأنا عبدك، وأنا على عهدك ووعدك ما استطعت، أعوذ بك من شر ما صنعت، أبوء لك بنعمتك عليّ، وأبوء بذنبي فاغفر لي، فإنه لا يغفر الذنوب إلا أنت.\n\nأعوذ بكلمات الله التامّات من شرّ ما خلق. (ثلاث مرات)\n\nبسم الله الذي لا يضرّ مع اسمه شيء في الأرض ولا في السماء، وهو السميع العليم. (ثلاث مرات)\n\nرضيت بالله ربًّا، وبالإسلام دينًا، وبمحمد صلى الله عليه وسلم نبيًّا. (ثلاث مرات)\n\nحسبي الله لا إله إلا هو، عليه توكلت، وهو ربّ العرش العظيم. (سبع مرات)\n\nسبحان الله وبحمده. (مائة مرة)</string>
 
+    <!-- Mode d'alerte -->
+    <string name="settings_notification_mode">نمط التنبيه</string>
+    <string name="settings_notification_mode_hint">يشمل الأذان والتذكير والأذكار</string>
+    <string name="notification_mode_follow_phone">حسب وضع الهاتف</string>
+    <string name="notification_mode_always_sound">الصوت دائمًا</string>
+    <string name="notification_mode_always_vibrate">الاهتزاز دائمًا</string>
+    <string name="notification_mode_silent">صامت دائمًا</string>
+
+    <!-- Fiabilité des notifications -->
+    <string name="settings_reliability">موثوقية الإشعارات</string>
+    <string name="settings_reliability_hint">إذا لم تصلك إشعارات الصلاة</string>
+    <string name="reliability_intro">حتى يصلك الأذان في وقته والتطبيق مغلق، تأكّد من النقاط التالية.</string>
+    <string name="reliability_action_fix">تصحيح</string>
+    <string name="reliability_state_ok">على ما يرام</string>
+    <string name="reliability_state_action">يحتاج إلى تصحيح</string>
+    <string name="reliability_state_unknown">غير معروف</string>
+    <string name="reliability_notifications">السماح بالإشعارات</string>
+    <string name="reliability_exact_alarms">المنبّهات الدقيقة</string>
+    <string name="reliability_battery">استثناء من تحسين البطارية</string>
+    <string name="reliability_autostart">التشغيل التلقائي</string>
+    <string name="reliability_autostart_hint">بعض الأجهزة (شاومي، هواوي، أوبو، فيفو، سامسونغ) توقف التطبيقات المغلقة، فلا يصل الأذان. فعّل التشغيل التلقائي وألغِ قيود البطارية.</string>
+    <string name="reliability_autostart_manual">افتح إعدادات الهاتف ← التطبيقات ← ميقات، وفعّل التشغيل التلقائي.</string>
+    <string name="reliability_autostart_done">قمت بذلك</string>
+    <string name="reliability_delivery">وصول التنبيهات</string>
+    <string name="reliability_next_alarm">التنبيه القادم: %1$s</string>
+    <string name="reliability_last_delivered">آخر تنبيه وصل: %1$s</string>
+    <string name="reliability_never_delivered">لم يصل أيّ تنبيه بعد</string>
+    <string name="reliability_test">إشعار تجريبي</string>
+    <string name="home_reliability_warning">قد لا تصلك إشعارات الصلاة</string>
+    <string name="action_later">لاحقًا</string>
+
     <!-- Widget de l'écran d'accueil -->
     <string name="widget_label">ميقات — الصلاة القادمة</string>
     <string name="widget_description">الصلاة القادمة والوقت المتبقّي ومواقيت اليوم على الشاشة الرئيسية</string>

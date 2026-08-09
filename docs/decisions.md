@@ -471,3 +471,248 @@ Corollaire vérifié au passage : une dimension en dur ne suit pas l'échelle de
 police. Un `width(72.dp)` sur la valeur du stepper hégirien coupait
 « Aucun ajustement » au milieu d'un mot dès l'échelle par défaut — d'où une valeur
 courte (`0`, `+1`) dans cet emplacement.
+
+## D31 — Une alerte en retard ne s'affiche jamais
+
+L'alarme du rappel du Fajr, posée à 4h, a été délivrée à 14h sur un Redmi Note 8 :
+la surcouche avait gelé l'application, et la diffusion n'est sortie qu'au moment
+où l'utilisateur l'a rouverte. Recevoir « le Fajr approche » à 14h est pire qu'une
+notification manquée — c'est une notification **fausse**, et elle décrédibilise
+toutes les autres.
+
+Le scheduler transmet donc `EXTRA_TRIGGER_AT` (l'instant visé), et le receiver le
+compare à l'heure réelle avant d'afficher quoi que ce soit. Les tolérances
+(`domain/AlarmFreshness.kt`) valent 20 min pour l'adhan, **5 min** pour le rappel,
+30 min pour une invocation.
+
+Les cinq minutes du rappel ne sont pas arbitraires : elles doivent rester
+**strictement inférieures** au délai de rappel le plus court (`LEAD_CHOICES`
+commence à 10 min), sans quoi un rappel périmé pourrait s'afficher *après* l'adhan
+qu'il annonçait. Un test verrouille cette inégalité.
+
+**Conséquences :**
+- l'extra absent (alarme posée par une version antérieure) vaut « frais » : on
+  affiche, comme avant. Aucune alarme en vol n'est perdue à la mise à jour ;
+- un déclenchement **en avance** (horloge reculée) est frais aussi — l'alerte
+  n'est pas périmée, elle est prématurée, et la chaîne la reposera ;
+- le filtrage ne porte que sur l'**affichage** : `scheduleNext()` est désormais
+  dans un `finally`, donc la chaîne se replanifie même sur un évènement ignoré,
+  même sans permission de notification, même après une exception.
+
+## D32 — `RescheduleReceiver` exporté, et quatre actions de plus
+
+`exported="false"` **fonctionnait** : la session 2 avait vérifié la
+replanification après reboot avec cette valeur. Le passage à `true` ne corrige
+donc rien — il est gratuit (les actions écoutées sont des *protected broadcasts*,
+qu'aucune application tierce ne peut forger, et le `when` ignore tout le reste) et
+il rend le receiver joignable depuis `adb` **sans root**, ce que la note de test
+de la session 2 signalait justement comme impossible.
+
+Ce qui corrigeait vraiment quelque chose, c'est l'ajout de
+`ACTION_MY_PACKAGE_REPLACED` : Android annule les alarmes d'un paquet remplacé,
+donc **chaque mise à jour de l'application tuait la chaîne** jusqu'à la prochaine
+ouverture — silencieusement, depuis toujours.
+
+`ACTION_SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED` est ajoutée sans en attendre
+grand-chose : elle ne concerne qu'Android 12/12L, `USE_EXACT_ALARM` étant accordée
+d'office et non révocable au-delà.
+
+⚠ Ne pas confondre avec `ACTION_PACKAGE_REPLACED`, qui exigerait un
+`<data android:scheme="package"/>` et se déclencherait pour **toutes** les
+applications du téléphone.
+
+## D33 — Un chien de garde, pas WorkManager
+
+La table de la stack annonçait « AlarmManager + WorkManager pour replanifier »
+depuis la session 1. WorkManager n'a jamais été implémenté, et ne le sera pas :
+c'est une dépendance de plus (avec son `ContentProvider` d'initialisation et sa
+base), pour du travail **déférable** — donc structurellement incapable de tenir la
+seule promesse de l'application — et gelé par les surcouches exactement comme le
+reste. La table est corrigée plutôt qu'honorée.
+
+À la place, une **seconde alarme**, inexacte, semi-quotidienne
+(`setInexactRepeating`, `requestCode 1003`), qui ne notifie rien : elle rappelle
+`scheduleNext()`. Inexacte volontairement — lui donner l'exactitude consommerait
+le quota Doze de la vraie alarme, ce que D18 et D25 s'interdisent.
+
+Elle répare la rupture de chaîne (une diffusion perdue, une exception imprévue),
+faiblesse structurelle de D3 « une seule alarme à la fois ». Elle ne répare
+**pas** le gel de l'application par une surcouche : rien de ce qu'on programme
+n'est alors délivré. C'est l'objet de D34.
+
+Alternative écartée : poser les trois prochains évènements sur trois `requestCode`
+distincts. Plus robuste, mais cela multiplierait par trois les alarmes exactes et
+casserait le raisonnement de quota Doze de D18 et D25.
+
+⚠ Ne **pas** brancher `NextPrayerWidget.onUpdate` sur `scheduleNext()` comme filet
+supplémentaire : `scheduleNext()` se termine par `NextPrayerWidget.refresh()`,
+d'où une boucle infinie.
+
+## D34 — L'écran de fiabilité, et la règle qui l'empêche de harceler
+
+Aucune API ne dit à une application qu'elle a été gelée, ni ne permet de demander
+le démarrage automatique. Le seul remède est de faire régler l'appareil par
+l'utilisateur — donc de le lui expliquer et de l'y emmener. Cinq contrôles :
+notifications autorisées, alarmes exactes, exclusion de l'optimisation de
+batterie, démarrage automatique de la surcouche, et **délivrance réelle**.
+
+Ce dernier est le seul détecteur automatique du gel : `ReliabilityLog` horodate
+chaque déclenchement du receiver, et une application installée depuis plus de 24 h
+qui n'a jamais rien délivré est forcément empêchée de s'exécuter. Sans cette
+trace, « la surcouche nous gèle » et « la chaîne s'est rompue » ont exactement le
+même symptôme et deux remèdes différents.
+
+**La règle anti-harcèlement**, verrouillée par un test : `CheckState.UNKNOWN` ne
+déclenche **jamais** la bannière d'accueil. L'état du démarrage automatique n'est
+pas lisible ; s'en servir afficherait à tout possesseur de Xiaomi un avertissement
+permanent qu'aucune action ne pourrait éteindre. On n'alarme que sur du **certain
+et du critique**, jamais par une modale au lancement, et « plus tard » fait taire
+la bannière quatorze jours. L'écran reste accessible depuis les réglages.
+
+**Conséquences :**
+- un contrôle `NOT_APPLICABLE` (alarmes exactes hors Android 12/12L, fabricant sans
+  écran connu) n'a pas de ligne du tout : mieux vaut une liste courte et vraie ;
+- l'écran affiche l'heure de la **prochaine alerte programmée** (via
+  `PrayerAlarmScheduler.nextEvent()`, extrait pour l'occasion) et celle de la
+  dernière reçue : deux faits valent mieux qu'un message rassurant ;
+- un bouton « notification de test » déclenche une vraie alerte, seul moyen
+  d'éprouver le mode d'alerte sans attendre une prière ;
+- la table des composants OEM (`data/reliability/OemAutostart.kt`) exige **trois**
+  précautions : le bloc `<queries>` du manifeste (sans lui, `resolveActivity`
+  renvoie `null` sur Android 11+, filtrage de visibilité des paquets),
+  `resolveActivity` pour choisir parmi des noms qui changent d'une version de
+  surcouche à l'autre, et un `try/catch` qui bascule sur les instructions écrites.
+
+## D35 — `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` est assumée
+
+Cette permission fait rejeter une application sur Google Play sauf cas listés.
+Miqaat est distribuée hors Play (GPL, releases GitHub) : la politique ne s'y
+applique pas, et l'exclusion de l'optimisation de batterie est la deuxième cause
+de notifications manquées après le démarrage automatique.
+
+Si une publication Play était envisagée un jour, il faudrait basculer sur
+`ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS` (la liste générale, sans demande
+ciblée) — déjà en place comme repli.
+
+## D36 — La décision d'alerte est abstraite, et vit dans le domaine
+
+Le réglage « mode d'alerte » croise deux données : ce que l'utilisateur a choisi
+et l'état du téléphone. La table de vérité qui en résulte est la partie qui a le
+plus de chances d'être fausse — donc celle qu'il faut tester. `AlertResolver`
+(`domain/NotificationAlert.kt`) ne connaît qu'un `NotificationMode` et un
+`RingerState`, et rend un `AlertDecision` : un flux audio éventuel et un style de
+vibration. La lecture d'`AudioManager` et de `NotificationManager` reste côté
+Android (`RingerReader`), la matrice est en JVM pur, et ses douze cases ont chacune
+leur assertion.
+
+| mode ＼ téléphone | sonnerie | vibreur | silencieux |
+|---|---|---|---|
+| **Suivre le téléphone** | sonnerie + impulsion | — + série | — + rien |
+| **Toujours sonner** | sonnerie + impulsion | alarme + impulsion | alarme + impulsion |
+| **Toujours vibrer** | — + série | — + série | — + série |
+| **Toujours silencieux** | — + rien | — + rien | — + rien |
+
+`AlertDecision.stream` est **nullable** plutôt que doublé d'un booléen
+`playSound` : l'état incohérent « je ne joue pas, mais voici mon flux » devient
+impossible à construire.
+
+« Toujours sonner » n'emprunte le flux « alarme » que lorsqu'il le faut : sur un
+téléphone qui sonne, la sonnerie suffit et respecte le volume que l'utilisateur a
+réglé pour elle.
+
+Le réglage vit dans un **troisième** instantané de `SettingsRepository`
+(`NotificationSettings`) et non dans `ReminderSettings` : celui-ci est un
+paramètre d'entrée de `PrayerEventResolver` et `AlarmEventResolver`, et y glisser
+une donnée de rendu obligerait toute la planification — et sa vingtaine de tests —
+à la transporter sans jamais s'en servir.
+
+⚠ `SettingsRepository.cache()` doit rafraîchir les **trois** instantanés. En
+oublier un le rendrait périmé pour les lecteurs synchrones, c'est-à-dire
+précisément pour le receiver d'alarme, qui tourne souvent dans un processus
+fraîchement démarré où aucun `Flow` n'a jamais émis. Bug invisible en test manuel,
+visible seulement application fermée.
+
+## D37 — Deux flux audio : la sonnerie d'appel par défaut, l'alarme pour forcer
+
+Jusqu'ici le son sortait en `USAGE_NOTIFICATION`, donc au volume des
+notifications. L'utilisateur attend le volume de la **sonnerie d'appel** :
+`USAGE_NOTIFICATION_RINGTONE` (flux `STREAM_RING`).
+
+Pour « toujours sonner », il faut un flux que le mode sonnerie ne coupe pas :
+`USAGE_ALARM` (`STREAM_ALARM`). C'est le seul moyen d'être entendu sur un téléphone
+en vibreur ou en silencieux — et cela joue au volume des alarmes, souvent proche
+du maximum. C'est le sens du réglage, et le sous-titre le dit.
+
+**Conséquences « Ne pas déranger », assumées :**
+- filtre « alarmes seulement » : « toujours sonner » passe, « suivre le
+  téléphone » non. Cohérent ;
+- filtre « silence total » : **rien ne passe, même le flux alarme**. Contourner
+  demanderait `setBypassDnd(true)` sur le canal, lui-même ignoré tant que
+  l'utilisateur n'a pas accordé `ACCESS_NOTIFICATION_POLICY` — permission lourde
+  et mal comprise, qu'on ne demandera pas. Le système gagne ;
+- `RingerReader` traite donc les deux filtres comme « silencieux », et
+  `getCurrentInterruptionFilter()` n'exige aucune permission, contrairement à
+  `getNotificationPolicy()`.
+
+Le type de gain de focus est inchangé : `AUDIOFOCUS_GAIN_TRANSIENT` pour l'adhan
+et le rappel — c'est lui qui met la musique en pause, D20 reste intact, mesure des
+31,0 s comprise. Une invocation, qui ne dure que quelques secondes, se contente de
+`..._MAY_DUCK` : l'interrompre serait disproportionné.
+
+## D38 — L'application reprend la vibration ; les trois canaux deviennent muets
+
+D20 avait retiré le **son** des canaux tout en laissant la **vibration** au canal,
+« pour qu'Android suive tout seul le mode du téléphone ». C'est exactement ce qui
+rendait le nouveau réglage impossible : tant que le canal décide, personne ne peut
+forcer quoi que ce soit.
+
+Les trois canaux passent donc à `setSound(null, null)` **et**
+`enableVibration(false)`, ce qui impose de nouveaux identifiants —
+`prayer_times_v4`, `prayer_reminder_v3`, `invocations_v2` — Android figeant les
+réglages d'un canal à sa création. Les anciens rejoignent `OLD_IDS` et sont
+supprimés au lancement, sans quoi ils resteraient en canaux fantômes dans les
+réglages système. ⚠ Le bump efface au passage les personnalisations que
+l'utilisateur aurait faites sur ces canaux : c'est inévitable, à mentionner dans
+la note de version.
+
+**La vibration part du receiver, jamais du service sonore.** Un `VibrationEffect`
+fini est confié au service système : il se poursuit même quand notre processus
+meurt. Le déclencher depuis un service qu'on arrête dès la fin du son le couperait
+au milieu.
+
+Les motifs sont **finis et courts** (≈ 0,4 s, ≈ 3 s pour l'adhan en série), jamais
+indexés sur la durée du son : trente et une secondes de vibration continue
+seraient agressives et videraient la batterie pour rien. Et l'attribut
+`USAGE_ALARM` est indispensable — sans lui, le système traite la vibration comme
+celle d'une notification et la supprime dès que l'utilisateur a coupé les
+vibrations de notification, ce qui viderait « toujours vibrer » de son sens.
+
+Effet de bord bienvenu : en mode vibreur ou silencieux, **plus aucun service
+d'avant-plan n'est démarré**. Auparavant on en lançait un pour découvrir, une fois
+dedans, qu'il n'y avait rien à jouer. `PrayerSoundService` est renommé
+`AlertSoundService` (il sert les trois natures d'alerte) — renommage sans risque,
+contrairement au receiver : aucune `PendingIntent` ne pointe sur un service.
+
+Ajout au passage de `onTimeout()` : un `shortService` non arrêté sous ~3 minutes
+lève une `ForegroundServiceDidNotStopInTimeException` fatale sur Android 14+.
+L'adhan dure 31 s, la marge est large, mais un `MediaPlayer` bloqué ne doit pas
+faire tomber l'application.
+
+## D39 — Les adhkār suivent le mode d'alerte (D27 est renversée)
+
+D27 laissait au canal des invocations le son de notification du système, pour que
+l'utilisateur puisse le régler depuis Android. Le réglage « mode d'alerte » rend
+cette exception incohérente : qui demande « toujours silencieux » n'attend pas
+qu'un dhikr sonne quand même.
+
+Les invocations passent donc par le même chemin que les prières — canal muet
+(`invocations_v2`), décision d'alerte, vibration depuis le receiver, son joué par
+`AlertSoundService`. Faute d'enregistrement livré, ce son reste
+`Settings.System.DEFAULT_NOTIFICATION_URI` : c'est bien le son de notification du
+téléphone qu'on entend, simplement joué par nous.
+
+Ce qui est perdu : le choix d'un son *différent* pour les adhkār depuis les
+réglages Android. Ce qui est gagné : un réglage unique qui vaut pour tout ce que
+l'application émet — c'est ce que l'utilisateur a demandé, et c'est plus facile à
+expliquer qu'une exception. Ce qui reste de D27 : l'importance `DEFAULT` du canal,
+un dhikr n'ayant ni la durée ni l'urgence d'un adhan.

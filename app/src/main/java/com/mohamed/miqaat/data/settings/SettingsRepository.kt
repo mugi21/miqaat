@@ -11,6 +11,8 @@ import androidx.datastore.preferences.preferencesDataStore
 import com.batoulapps.adhan2.Madhab
 import com.mohamed.miqaat.domain.model.CalculationSettings
 import com.mohamed.miqaat.domain.model.MethodOption
+import com.mohamed.miqaat.domain.model.NotificationMode
+import com.mohamed.miqaat.domain.model.NotificationSettings
 import com.mohamed.miqaat.domain.model.PrayerName
 import com.mohamed.miqaat.domain.model.PrayerTimeAdjustments
 import com.mohamed.miqaat.domain.model.ReminderSettings
@@ -37,6 +39,9 @@ class SettingsRepository(context: Context) {
     @Volatile
     private var reminderMemory: ReminderSettings? = null
 
+    @Volatile
+    private var notificationMemory: NotificationSettings? = null
+
     val settingsFlow: Flow<CalculationSettings> =
         dataStore.data.map { it.toSettings().also { s -> memory = s } }
 
@@ -44,11 +49,18 @@ class SettingsRepository(context: Context) {
     val reminderFlow: Flow<ReminderSettings> =
         dataStore.data.map { it.toReminder().also { r -> reminderMemory = r } }
 
+    /** Le mode d'alerte : n'influence ni les horaires ni les évènements, seulement leur rendu. */
+    val notificationFlow: Flow<NotificationSettings> =
+        dataStore.data.map { it.toNotification().also { n -> notificationMemory = n } }
+
     fun current(): CalculationSettings =
         memory ?: runBlocking { dataStore.data.first().also(::cache).toSettings() }
 
     fun currentReminder(): ReminderSettings =
         reminderMemory ?: runBlocking { dataStore.data.first().also(::cache).toReminder() }
+
+    fun currentNotification(): NotificationSettings =
+        notificationMemory ?: runBlocking { dataStore.data.first().also(::cache).toNotification() }
 
     suspend fun setReminderEnabled(enabled: Boolean) {
         dataStore.edit { it[KEY_REMINDER_ENABLED] = enabled }.also(::cache)
@@ -57,6 +69,10 @@ class SettingsRepository(context: Context) {
     suspend fun setReminderLeadMinutes(minutes: Int) {
         val valid = ReminderSettings.sanitizeLead(minutes)
         dataStore.edit { it[KEY_REMINDER_LEAD] = valid }.also(::cache)
+    }
+
+    suspend fun setNotificationMode(mode: NotificationMode) {
+        dataStore.edit { it[KEY_NOTIFICATION_MODE] = mode.name }.also(::cache)
     }
 
     /** Choix manuel d'une méthode : désactive la sélection automatique, atomiquement. */
@@ -102,10 +118,16 @@ class SettingsRepository(context: Context) {
         dataStore.edit { it[KEY_HIJRI_OFFSET] = bounded }.also(::cache)
     }
 
-    /** Un seul jeu de préférences : chaque écriture rafraîchit les deux instantanés. */
+    /**
+     * Un seul jeu de préférences : chaque écriture rafraîchit **tous** les
+     * instantanés. En oublier un le rendrait périmé pour les lecteurs synchrones
+     * — c'est-à-dire, précisément, pour le receiver d'alarme, qui tourne souvent
+     * dans un processus fraîchement démarré où aucun Flow n'a jamais émis.
+     */
     private fun cache(preferences: Preferences) {
         memory = preferences.toSettings()
         reminderMemory = preferences.toReminder()
+        notificationMemory = preferences.toNotification()
     }
 
     private fun Preferences.toSettings(): CalculationSettings {
@@ -135,6 +157,9 @@ class SettingsRepository(context: Context) {
         )
     }
 
+    private fun Preferences.toNotification(): NotificationSettings =
+        NotificationSettings(mode = NotificationMode.parse(this[KEY_NOTIFICATION_MODE]))
+
     private companion object {
         /** Une clé par moment : `adjust_fajr`, `adjust_sunrise`… */
         fun adjustmentKey(prayer: PrayerName) =
@@ -146,5 +171,6 @@ class SettingsRepository(context: Context) {
         val KEY_HIJRI_OFFSET = intPreferencesKey("hijri_offset_days")
         val KEY_REMINDER_ENABLED = booleanPreferencesKey("reminder_enabled")
         val KEY_REMINDER_LEAD = intPreferencesKey("reminder_lead_minutes")
+        val KEY_NOTIFICATION_MODE = stringPreferencesKey("notification_mode")
     }
 }

@@ -38,6 +38,7 @@ import com.mohamed.miqaat.ui.calendar.CalendarScreen
 import com.mohamed.miqaat.ui.home.HomeScreen
 import com.mohamed.miqaat.ui.invocations.InvocationsScreen
 import com.mohamed.miqaat.ui.qibla.QiblaScreen
+import com.mohamed.miqaat.ui.reliability.ReliabilityScreen
 import com.mohamed.miqaat.ui.settings.SettingsScreen
 import com.mohamed.miqaat.ui.splash.SplashScreen
 import com.mohamed.miqaat.ui.theme.MiqaatTheme
@@ -45,7 +46,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /** Les écrans de premier niveau ; enum = Serializable, donc rememberSaveable le garde. */
-private enum class Screen { HOME, SETTINGS, QIBLA, CALENDAR, INVOCATIONS }
+private enum class Screen { HOME, SETTINGS, QIBLA, CALENDAR, INVOCATIONS, RELIABILITY }
 
 class MainActivity : ComponentActivity() {
 
@@ -144,10 +145,17 @@ class MainActivity : ComponentActivity() {
                                 onOpenQibla = { screen = Screen.QIBLA },
                                 onOpenCalendar = { screen = Screen.CALENDAR },
                                 onOpenInvocations = { screen = Screen.INVOCATIONS },
+                                onOpenReliability = { screen = Screen.RELIABILITY },
                                 modifier = Modifier.padding(innerPadding),
                             )
 
                             Screen.SETTINGS -> SettingsScreen(
+                                onBack = { screen = Screen.HOME },
+                                onOpenReliability = { screen = Screen.RELIABILITY },
+                                modifier = Modifier.padding(innerPadding),
+                            )
+
+                            Screen.RELIABILITY -> ReliabilityScreen(
                                 onBack = { screen = Screen.HOME },
                                 modifier = Modifier.padding(innerPadding),
                             )

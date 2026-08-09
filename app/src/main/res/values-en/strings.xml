@@ -139,6 +139,37 @@
     <string name="notification_invocation_title">Time for %1$s</string>
     <string name="notification_invocation_text">Tap to read</string>
 
+    <!-- Alert mode -->
+    <string name="settings_notification_mode">Alert mode</string>
+    <string name="settings_notification_mode_hint">Applies to the adhan, the reminder and adhkār</string>
+    <string name="notification_mode_follow_phone">Follow the phone\'s mode</string>
+    <string name="notification_mode_always_sound">Always play sound</string>
+    <string name="notification_mode_always_vibrate">Always vibrate</string>
+    <string name="notification_mode_silent">Always silent</string>
+
+    <!-- Notification reliability -->
+    <string name="settings_reliability">Notification reliability</string>
+    <string name="settings_reliability_hint">If prayer notifications do not arrive</string>
+    <string name="reliability_intro">So the adhan arrives on time with the app closed, check these points.</string>
+    <string name="reliability_action_fix">Fix</string>
+    <string name="reliability_state_ok">All good</string>
+    <string name="reliability_state_action">Needs fixing</string>
+    <string name="reliability_state_unknown">Unknown</string>
+    <string name="reliability_notifications">Allow notifications</string>
+    <string name="reliability_exact_alarms">Exact alarms</string>
+    <string name="reliability_battery">Exclude from battery optimisation</string>
+    <string name="reliability_autostart">Auto-start</string>
+    <string name="reliability_autostart_hint">Some devices (Xiaomi, Huawei, Oppo, Vivo, Samsung) freeze closed apps, so the adhan never arrives. Enable auto-start and remove battery restrictions.</string>
+    <string name="reliability_autostart_manual">Open Settings → Apps → Miqaat and enable auto-start.</string>
+    <string name="reliability_autostart_done">Done</string>
+    <string name="reliability_delivery">Alert delivery</string>
+    <string name="reliability_next_alarm">Next alert: %1$s</string>
+    <string name="reliability_last_delivered">Last alert received: %1$s</string>
+    <string name="reliability_never_delivered">No alert received yet</string>
+    <string name="reliability_test">Test notification</string>
+    <string name="home_reliability_warning">Prayer notifications may not arrive</string>
+    <string name="action_later">Later</string>
+
     <!-- Home screen widget -->
     <string name="widget_label">Miqaat — Next prayer</string>
     <string name="widget_description">The next prayer, the time remaining and today\'s times on your home screen</string>

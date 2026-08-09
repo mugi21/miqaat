@@ -32,6 +32,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mohamed.miqaat.R
 import com.mohamed.miqaat.domain.model.PrayerName
 import com.mohamed.miqaat.miqaatApp
+import com.mohamed.miqaat.ui.reliability.ReliabilityBanner
 import com.mohamed.miqaat.ui.theme.MiqaatTheme
 
 @Composable
@@ -40,6 +41,7 @@ fun HomeScreen(
     onOpenQibla: () -> Unit,
     onOpenCalendar: () -> Unit,
     onOpenInvocations: () -> Unit,
+    onOpenReliability: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = homeViewModel(),
 ) {
@@ -50,6 +52,7 @@ fun HomeScreen(
         onOpenQibla = onOpenQibla,
         onOpenCalendar = onOpenCalendar,
         onOpenInvocations = onOpenInvocations,
+        onOpenReliability = onOpenReliability,
         modifier = modifier,
     )
 }
@@ -72,6 +75,7 @@ private fun HomeContent(
     onOpenQibla: () -> Unit,
     onOpenCalendar: () -> Unit,
     onOpenInvocations: () -> Unit,
+    onOpenReliability: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     Box(modifier = modifier.fillMaxSize()) {
@@ -86,6 +90,14 @@ private fun HomeContent(
         ) {
             HeroSection(state = state)
             Spacer(Modifier.height(24.dp))
+            // Ne s'affiche que si quelque chose de critique et de certain empêche
+            // les notifications d'arriver — sinon la fonction ne pose rien.
+            ReliabilityBanner(
+                onOpen = onOpenReliability,
+                // Marges portées par la bannière elle-même : invisible, elle ne
+                // compose rien du tout et ne laisse donc aucun blanc.
+                modifier = Modifier.padding(start = 20.dp, end = 20.dp, bottom = 16.dp),
+            )
             Text(
                 text = stringResource(R.string.section_today_times),
                 style = MaterialTheme.typography.labelMedium,

@@ -71,8 +71,9 @@ tests la lisent depuis la constante.
 1. `PrayerAlarmScheduler.scheduleNext()` demande le prochain `ScheduledEvent` à
    `AlarmEventResolver` et met `EXTRA_INVOCATION` dans l'intent si c'en est une.
 2. `PrayerAlarmReceiver` relit l'invocation (elle a pu être supprimée ou coupée
-   entre la pose de l'alarme et son déclenchement), pose la notification —
-   **sans** `PrayerSoundService`, le canal a son propre son (D27) — puis
+   entre la pose de l'alarme et son déclenchement), vérifie sa fraîcheur (D31),
+   pose la notification, puis applique le **mode d'alerte** comme pour une prière
+   — vibration et son via `AlertSoundService` (D39, qui renverse D27) — et
    replanifie.
 3. Un appui ouvre `MainActivity` (`singleTop`, donc `onNewIntent`) sur l'écran
    des invocations, directement sur la bonne entrée.
@@ -84,5 +85,5 @@ tests la lisent depuis la constante.
 | Ajouter une invocation livrée | `BuiltinInvocation` + `seedEntity()` + `ui/InvocationLabels.kt` + les trois `strings.xml` |
 | Changer la garde | `AlarmEventResolver.GUARD_MINUTES` |
 | Changer les bornes du décalage | `InvocationSchedule.OFFSET_MIN` / `OFFSET_MAX` / `OFFSET_STEP` |
-| Changer le son du rappel d'adhkār | canal `invocations_v1` dans `NotificationChannels` → **bumper l'ID** |
+| Changer le son du rappel d'adhkār | `AlertSoundService.resolveTarget` (aujourd'hui `DEFAULT_NOTIFICATION_URI`) ; le canal `invocations_v2` est muet, aucun ID à bumper |
 | Ajouter un champ à une invocation | `InvocationEntity` + une migration Room + `InvocationRepository` |

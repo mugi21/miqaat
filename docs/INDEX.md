@@ -9,6 +9,8 @@ vision, stack, roadmap et **État actuel** mis à jour à chaque fin de session.
 | [decisions.md](decisions.md) | Décisions d'architecture notables, avec leur raison et leurs conséquences |
 | [file-map.md](file-map.md) | Carte des fichiers : où vit quoi, et quoi toucher pour telle évolution |
 | [i18n.md](i18n.md) | Multilingue : arabe par défaut, français, anglais — règles et pièges |
+| [notifications.md](notifications.md) | La chaîne d'alarmes, les canaux et leurs identifiants, le mode d'alerte, la garde de fraîcheur |
+| [reliability.md](reliability.md) | Pourquoi l'adhan n'arrive pas : les cinq verrous, les surcouches constructeur, la procédure MIUI |
 | [invocations.md](invocations.md) | Adhkār : invocations livrées et créées, moment du rappel, garde de dix minutes |
 | [release.md](release.md) | Publier une version : clé de signature, build release, tag et release GitHub |
 

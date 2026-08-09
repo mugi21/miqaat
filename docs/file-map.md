@@ -20,6 +20,9 @@ Package racine : `com.mohamed.miqaat` (`app/src/main/java/com/mohamed/miqaat/`).
 | `HijriFormatter.kt` | Date hégirienne (Umm al-Qura) avec décalage manuel : jour complet, mois + année, conversion brute (`toHijri`) et les extensions `hijriDayOfMonth` / `hijriMonth` / `isRamadan`. |
 | **`MonthGrid.kt`** | Découpe un mois grégorien en cases de grille alignées sur le premier jour de la semaine (`monthGridCells`, `weekdaysFrom`). |
 | **`RamadanTimes.kt`** | Imsāk et iftār déduits du Fajr et du Maghrib, durée du jeûne (`IMSAK_MINUTES_BEFORE_FAJR`). Voir D22. |
+| **`AlarmFreshness.kt`** | Tolérances de retard par nature d'évènement : une alerte délivrée trop tard ne s'affiche pas. Voir D31. |
+| **`NotificationAlert.kt`** | `AlertResolver` : mode d'alerte × état du téléphone → `AlertDecision` (flux audio, style de vibration). Voir D36. |
+| **`reliability/ReliabilityCheck.kt`** | Les cinq contrôles de fiabilité, leur état, et `ReliabilityVerdict` — dont la règle « un état inconnu n'alarme jamais ». Voir D34. |
 | `CountdownFormatter.kt` | `formatCountdown(Duration)`. |
 | `AutoMethodResolver.kt` | Code pays ISO → méthode de calcul ; `CalculationSettings.effectiveMethod()`. |
 | **`QiblaCalculator.kt`** | Azimut de la Qibla (grand cercle) et distance à la Kaaba (haversine) + utilitaires d'angles (`normalizeDegrees`, `shortestAngleDelta`, `isAlignedWithQibla`, `lerpDegrees`). |
@@ -28,6 +31,8 @@ Package racine : `com.mohamed.miqaat` (`app/src/main/java/com/mohamed/miqaat/`).
 | `model/CalculationSettings.kt` | Méthode, mode auto, madhab, décalage hégirien, ajustements manuels. |
 | **`model/PrayerTimeAdjustments.kt`** | Minutes ajoutées manuellement à chaque moment (±30). S'additionnent à la marge de la méthode ; les zéros ne sont jamais stockés. Voir D24. |
 | **`model/ReminderSettings.kt`** | Rappel avant l'adhan : actif ou non, délai (`LEAD_CHOICES`, minimum 10 min — voir D18). |
+| **`model/NotificationMode.kt`** | Suivre le téléphone, toujours sonner, toujours vibrer, toujours silencieux. |
+| **`model/NotificationSettings.kt`** | Réglages de **rendu** des alertes, tenus à part de la planification. |
 | **`model/Invocation.kt`** | Une invocation (livrée ou écrite) et son moment (`InvocationSchedule` : heure fixe ou ancrage à une prière). Voir D26. |
 
 ## `data/` — sources de données
@@ -42,19 +47,24 @@ Package racine : `com.mohamed.miqaat` (`app/src/main/java/com/mohamed/miqaat/`).
 | **`settings/AppLocale.kt`** | `AppLanguage` + langue choisie dans l'app : stockage `SharedPreferences` (lecture synchrone) et `wrap(context)` pour habiller un contexte. Voir [i18n.md](i18n.md). |
 | `db/` | Room : `MiqaatDatabase` (v3), `CachedLocationEntity` (singleton id=1), `LocationDao`, **`InvocationEntity` + `InvocationDao`**. |
 | **`invocations/InvocationRepository.kt`** | Les invocations : instantané mémoire + `Flow`, semis idempotent des deux entrées livrées (ids fixes). Voir [invocations.md](invocations.md). |
+| **`reliability/ReliabilityLog.kt`** | `SharedPreferences` : dernière alerte réellement délivrée, report de la bannière, étape OEM acquittée. Seul moyen de détecter le gel de l'app par une surcouche. |
+| **`reliability/ReliabilityInspector.kt`** | Interroge les cinq verrous (notifications, alarmes exactes, batterie, démarrage auto, délivrance) et ouvre l'écran système qui corrige chacun. |
+| **`reliability/OemAutostart.kt`** | Table `Build.MANUFACTURER` → écrans de démarrage automatique des surcouches. ⚠ Exige le bloc `<queries>` du manifeste. |
 | **`compass/CompassDataSource.kt`** | Capteurs → `Flow<CompassReading>` : choix du capteur et replis, permutation des axes selon la rotation de l'écran, déclinaison magnétique (`GeomagneticField`, hors ligne), lissage circulaire. |
 
 ## `notifications/`
 
 | Fichier | Rôle |
 |---|---|
-| **`NotificationChannels.kt`** | Les trois canaux : `prayer_times_v3` et `prayer_reminder_v2` **muets** (le son est joué par le service, D20), et `invocations_v1` qui garde le son du système (D27). ⚠ Tout changement de réglage d'un canal impose de bumper son ID. |
+| **`NotificationChannels.kt`** | Les trois canaux — `prayer_times_v4`, `prayer_reminder_v3`, `invocations_v2` — **tous muets et sans vibration** : l'app joue le son (D20) et vibre (D38) elle-même. ⚠ Tout changement de réglage d'un canal impose de bumper son ID **et** d'ajouter l'ancien à `OLD_IDS`. |
 | **`PrayerNotifications.kt`** | Point unique de construction : identifiant, canal, son et contenu traduit d'un évènement de prière. Partagé par le receiver et le service. |
-| **`InvocationNotifications.kt`** | La notification d'une invocation : texte déplié, appui → l'invocation ouverte dans l'app. Pas de service sonore (D27). |
-| **`PrayerSoundService.kt`** | Service d'avant-plan : focus audio (`AUDIOFOCUS_GAIN_TRANSIENT`, met la musique en pause) + `MediaPlayer`. Respecte le mode du téléphone. Voir D20. |
-| `PrayerAlarmScheduler.kt` | Une alarme exacte à la fois (`setExactAndAllowWhileIdle`, repli `setAlarmClock`), posée sur le prochain **évènement** (rappel, adhan ou invocation). |
-| `PrayerAlarmReceiver.kt` | Pose la notification selon `EXTRA_KIND` (rappel / adhan) ou `EXTRA_INVOCATION`, lance le son s'il y a lieu, puis planifie l'évènement suivant (chaîne). ⚠ **Ne pas renommer** : les alarmes déjà posées pointent sur ce nom de classe. |
-| `RescheduleReceiver.kt` | `BOOT_COMPLETED`, `TIME_SET`, `TIMEZONE_CHANGED`. |
+| **`InvocationNotifications.kt`** | La notification d'une invocation : texte déplié, appui → l'invocation ouverte dans l'app. Suit le mode d'alerte depuis D39. |
+| **`AlertSoundService.kt`** | Service d'avant-plan : focus audio (`AUDIOFOCUS_GAIN_TRANSIENT`, met la musique en pause) + `MediaPlayer`, sur le flux décidé par le receiver. `onTimeout()` pour le `shortService` d'Android 14+. Voir D20 et D37. |
+| **`AlertVibrator.kt`** | La vibration, en motifs finis. Appelé **depuis le receiver** : l'effet confié au service système survit à la mort du processus. Voir D38. |
+| **`RingerReader.kt`** | Mode sonnerie + filtre « Ne pas déranger » → `RingerState`. Seul point de lecture Android de l'état sonore. |
+| `PrayerAlarmScheduler.kt` | Une alarme exacte à la fois (`setExactAndAllowWhileIdle`, replis `setAlarmClock` puis inexact), posée sur le prochain **évènement** ; `nextEvent()` l'expose sans rien programmer ; pose aussi le chien de garde (D33). |
+| `PrayerAlarmReceiver.kt` | Vérifie la fraîcheur (D31), pose la notification, décide de l'alerte (D36), vibre, lance le son, puis planifie l'évènement suivant dans un `finally`. ⚠ **Ne pas renommer** : les alarmes déjà posées pointent sur ce nom de classe. |
+| `RescheduleReceiver.kt` | `BOOT_COMPLETED`, `TIME_SET`, `TIMEZONE_CHANGED`, `MY_PACKAGE_REPLACED`, changement de permission d'alarme exacte, et le chien de garde. `exported="true"` — voir D32. |
 
 ## `widget/` — widget d'écran d'accueil
 
@@ -74,7 +84,10 @@ Package racine : `com.mohamed.miqaat` (`app/src/main/java/com/mohamed/miqaat/`).
 | `home/HomeScreen.kt` | Écran d'accueil ; les deux boutons du haut ouvrent la Qibla (start) et les réglages (end). |
 | `home/HeroSection.kt`, `home/PrayerList.kt` | En-tête dégradé et liste des six moments. |
 | `home/HomeViewModel.kt` | Tick 1 s aligné sur l'horloge, arrêté en arrière-plan ; recalcul si (date, position, réglages) change. |
-| `settings/SettingsScreen.kt`, `settings/SettingsViewModel.kt` | Méthode, madhab, décalage hégirien, rappel avant l'adhan, langue ; tout changement replanifie l'alarme. |
+| `settings/SettingsScreen.kt`, `settings/SettingsViewModel.kt` | Méthode, madhab, décalage hégirien, rappel avant l'adhan, **mode d'alerte**, accès à la fiabilité, langue ; tout changement replanifie l'alarme. |
+| **`reliability/ReliabilityScreen.kt`** | Les cinq contrôles avec leur bouton de correction, la carte du démarrage automatique, prochaine alerte / dernière reçue, et une notification de test. |
+| **`reliability/ReliabilityViewModel.kt`**, **`reliability/ReliabilityUiState.kt`** | Diagnostic réévalué à chaque `ON_RESUME` ; contexte de l'application, jamais celui de l'activité. |
+| **`reliability/ReliabilityBanner.kt`** | L'avertissement d'accueil, affiché seulement sur du critique et du certain, avec report de 14 jours. Voir D34. |
 | **`qibla/QiblaScreen.kt`** | Écran Qibla : en-tête, cadran, message d'état, angle et distance, vibration à l'alignement. |
 | **`qibla/QiblaCompass.kt`** | Le cadran, entièrement dessiné au Canvas avec les couleurs du thème. |
 | **`qibla/QiblaViewModel.kt`**, **`qibla/QiblaUiState.kt`** | Position figée à l'ouverture + flux des capteurs ; libérés dès que l'écran disparaît. |
@@ -103,14 +116,15 @@ Package racine : `com.mohamed.miqaat` (`app/src/main/java/com/mohamed/miqaat/`).
 | `res/drawable/ic_mosque.xml` | Mosquée minimaliste (coupole, minarets, mosaïque en creux `evenOdd`) — icône du widget. |
 | `res/drawable/widget_background.xml`, `widget_mosaic.xml`, `widget_slot_next.xml`, `widget_preview.xml` | Carte translucide du widget, treillis de mosaïque, pastille de la prochaine prière, aperçu du sélecteur. |
 | `res/raw/prayer_notification.wav` | Appel à la prière du canal de notification. |
-| `res/raw/prayer_reminder.mp3` | Son du rappel avant l'adhan (canal `prayer_reminder_v2`). |
+| `res/raw/prayer_reminder.mp3` | Son du rappel avant l'adhan. |
 | `res/font/` | IBM Plex Sans Arabic (SIL OFL), trois graisses. |
 
 ## Tests (`app/src/test/`)
 
 Un fichier par unité de domaine : horaires, resolver, Hijri, countdown, méthodes,
-mapping pays, Qibla, évènements d'alarme et réglages du rappel, **grille de mois et
-horaires de Ramadan**. Tous en JVM pur, aucun émulateur nécessaire.
+mapping pays, Qibla, évènements d'alarme et réglages du rappel, grille de mois et
+horaires de Ramadan, **matrice du mode d'alerte, garde de fraîcheur et verdict de
+fiabilité**. Tous en JVM pur, aucun émulateur nécessaire.
 
 ## Où toucher pour…
 
@@ -128,5 +142,8 @@ horaires de Ramadan**. Tous en JVM pur, aucun émulateur nécessaire.
 | Changer la marge de l'imsāk | `IMSAK_MINUTES_BEFORE_FAJR` (`domain/RamadanTimes.kt`) — le texte d'aide suit tout seul (plurals) |
 | Changer l'aspect d'une case du calendrier | `ui/calendar/MonthGrid.kt` ; le contenu d'une case vient de `CalendarDayUi` |
 | Modifier le widget | `res/layout/widget_next_prayer.xml` + `widget/NextPrayerWidgetViews.kt` ; une couleur nouvelle → **les deux** `colors.xml` |
+| Changer le comportement sonore ou vibratoire | `domain/NotificationAlert.kt` (la matrice) + `AlertVibrator` (les motifs) + `AlertSoundService` (les flux) — voir [notifications.md](notifications.md) |
+| Ajouter un fabricant à la liste du démarrage automatique | `data/reliability/OemAutostart.kt` **et** le bloc `<queries>` du manifeste — l'oubli le plus probable |
+| Changer une tolérance de retard | `domain/AlarmFreshness.kt` ; celle du rappel doit rester **sous** `LEAD_CHOICES.min()` |
 | Ajouter un texte | les **trois** `strings.xml` |
 | Ajouter une surface hors activité (widget, notification…) | l'entourer de `AppLocale.wrap()`, sinon elle ignore la langue choisie dans l'app |

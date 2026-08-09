@@ -18,7 +18,7 @@ import com.mohamed.miqaat.ui.labelRes
  * Tout ce qui décrit la notification d'un évènement, au même endroit : son
  * identifiant, son canal, son son, et son contenu déjà traduit.
  *
- * [PrayerAlarmReceiver] la pose et [PrayerSoundService] la reprend à son compte
+ * [PrayerAlarmReceiver] la pose et [AlertSoundService] la reprend à son compte
  * pour rester en avant-plan le temps du son — les deux doivent construire
  * exactement la même, d'où ce point unique.
  */

@@ -51,6 +51,8 @@ import com.mohamed.miqaat.data.settings.AppLanguage
 import com.mohamed.miqaat.data.settings.AppLocale
 import com.mohamed.miqaat.domain.model.CalculationSettings
 import com.mohamed.miqaat.domain.model.MethodOption
+import com.mohamed.miqaat.domain.model.NotificationMode
+import com.mohamed.miqaat.domain.model.NotificationSettings
 import com.mohamed.miqaat.domain.model.PrayerName
 import com.mohamed.miqaat.domain.model.PrayerTimeAdjustments
 import com.mohamed.miqaat.domain.model.ReminderSettings
@@ -64,18 +66,23 @@ import java.util.Locale
 @Composable
 fun SettingsScreen(
     onBack: () -> Unit,
+    onOpenReliability: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: SettingsViewModel = settingsViewModel(),
 ) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     val reminder by viewModel.reminder.collectAsStateWithLifecycle()
+    val notification by viewModel.notification.collectAsStateWithLifecycle()
     val context = LocalContext.current
     SettingsContent(
         settings = settings,
         reminder = reminder,
+        notification = notification,
         autoMethod = viewModel.autoMethod,
         language = AppLocale.current(context),
         onBack = onBack,
+        onOpenReliability = onOpenReliability,
+        onNotificationModeSelected = viewModel::setNotificationMode,
         onMethodSelected = viewModel::setMethod,
         onAutoSelected = viewModel::setMethodAuto,
         onMadhabSelected = viewModel::setMadhab,
@@ -126,9 +133,12 @@ private fun settingsViewModel(): SettingsViewModel {
 private fun SettingsContent(
     settings: CalculationSettings,
     reminder: ReminderSettings,
+    notification: NotificationSettings,
     autoMethod: MethodOption,
     language: AppLanguage,
     onBack: () -> Unit,
+    onOpenReliability: () -> Unit,
+    onNotificationModeSelected: (NotificationMode) -> Unit,
     onMethodSelected: (MethodOption) -> Unit,
     onAutoSelected: () -> Unit,
     onMadhabSelected: (Madhab) -> Unit,
@@ -227,6 +237,19 @@ private fun SettingsContent(
                 }
                 SettingDivider()
                 SettingRow(
+                    title = stringResource(R.string.settings_notification_mode),
+                    value = stringResource(notification.mode.labelRes),
+                    subtitle = stringResource(R.string.settings_notification_mode_hint),
+                    onClick = { openDialog = SettingsDialog.NOTIFICATION_MODE },
+                )
+                SettingDivider()
+                SettingRow(
+                    title = stringResource(R.string.settings_reliability),
+                    value = stringResource(R.string.settings_reliability_hint),
+                    onClick = onOpenReliability,
+                )
+                SettingDivider()
+                SettingRow(
                     title = stringResource(R.string.settings_language),
                     value = stringResource(language.labelRes),
                     onClick = { openDialog = SettingsDialog.LANGUAGE },
@@ -276,6 +299,14 @@ private fun SettingsContent(
             onDismiss = { openDialog = SettingsDialog.NONE },
         )
 
+        SettingsDialog.NOTIFICATION_MODE -> RadioDialog(
+            title = stringResource(R.string.settings_notification_mode),
+            options = NotificationMode.entries.map { it to stringResource(it.labelRes) },
+            selected = notification.mode,
+            onSelect = { onNotificationModeSelected(it); openDialog = SettingsDialog.NONE },
+            onDismiss = { openDialog = SettingsDialog.NONE },
+        )
+
         SettingsDialog.LANGUAGE -> RadioDialog(
             title = stringResource(R.string.settings_language),
             options = AppLanguage.entries.map { it to stringResource(it.labelRes) },
@@ -295,7 +326,9 @@ private fun SettingsContent(
     }
 }
 
-private enum class SettingsDialog { NONE, METHOD, MADHAB, REMINDER_LEAD, LANGUAGE, ADJUSTMENTS }
+private enum class SettingsDialog {
+    NONE, METHOD, MADHAB, REMINDER_LEAD, NOTIFICATION_MODE, LANGUAGE, ADJUSTMENTS
+}
 
 /** « العصر +1 · المغرب +3 », ou « aucun ajustement » si tout est à zéro. */
 @Composable
@@ -407,7 +440,12 @@ private fun AdjustmentRow(label: String, minutes: Int, onChanged: (Int) -> Unit)
 }
 
 @Composable
-private fun SettingRow(title: String, value: String, onClick: () -> Unit) {
+private fun SettingRow(
+    title: String,
+    value: String,
+    onClick: () -> Unit,
+    subtitle: String? = null,
+) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -420,6 +458,13 @@ private fun SettingRow(title: String, value: String, onClick: () -> Unit) {
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.primary,
         )
+        if (subtitle != null) {
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
 
@@ -605,6 +650,14 @@ private val MethodOption.labelRes: Int
         MethodOption.MALAYSIA -> R.string.method_malaysia
         MethodOption.PORTUGAL -> R.string.method_portugal
         MethodOption.GULF -> R.string.method_gulf
+    }
+
+private val NotificationMode.labelRes: Int
+    @StringRes get() = when (this) {
+        NotificationMode.FOLLOW_PHONE -> R.string.notification_mode_follow_phone
+        NotificationMode.ALWAYS_SOUND -> R.string.notification_mode_always_sound
+        NotificationMode.ALWAYS_VIBRATE -> R.string.notification_mode_always_vibrate
+        NotificationMode.SILENT -> R.string.notification_mode_silent
     }
 
 private val Madhab.labelRes: Int
