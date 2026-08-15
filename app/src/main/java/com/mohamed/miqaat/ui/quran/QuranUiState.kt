@@ -33,11 +33,20 @@ data class QuranUiState(
         }
 
     /**
-     * Les récitateurs à afficher : les favoris d'abord — sans quoi une liste de
-     * cent trente noms serait inutilisable — puis le reste, chaque groupe dans
-     * l'ordre du catalogue. La recherche filtre les deux.
+     * Les récitateurs à afficher, **séparés en deux groupes** : les favoris
+     * d'abord — sans quoi une liste de cent trente noms serait inutilisable —
+     * puis le reste, chacun dans l'ordre du catalogue. La recherche filtre les
+     * deux. Deux listes plutôt qu'une seule concaténée : c'est ce qui permet à
+     * l'écran de poser un intertitre entre elles.
      */
-    val visibleReciters: List<Reciter>
+    val favoriteReciters: List<Reciter> get() = matchingReciters.first
+
+    val otherReciters: List<Reciter> get() = matchingReciters.second
+
+    val hasNoMatch: Boolean
+        get() = favoriteReciters.isEmpty() && otherReciters.isEmpty()
+
+    private val matchingReciters: Pair<List<Reciter>, List<Reciter>>
         get() {
             val needle = query.trim()
             val matching = if (needle.isEmpty()) {
@@ -45,9 +54,6 @@ data class QuranUiState(
             } else {
                 catalog.reciters.filter { it.name.contains(needle, ignoreCase = true) }
             }
-            val (favorite, others) = matching.partition { it.id in favorites.reciterIds }
-            return favorite + others
+            return matching.partition { it.id in favorites.reciterIds }
         }
-
-    val favoriteCount: Int get() = visibleReciters.count { it.id in favorites.reciterIds }
 }

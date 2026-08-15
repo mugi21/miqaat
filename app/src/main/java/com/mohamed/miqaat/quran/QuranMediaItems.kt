@@ -19,6 +19,8 @@ object QuranMediaItems {
         reciterName: String,
         surahIds: List<Int>,
         surahNames: Map<Int, String>,
+        /** La pochette Miqaat ; voir [QuranArtwork] pour pourquoi elle est obligatoire en pratique. */
+        artwork: ByteArray? = null,
     ): List<MediaItem> = surahIds.mapNotNull { surahId ->
         val url = QuranAudio.audioUrl(moshaf, surahId) ?: return@mapNotNull null
         MediaItem.Builder()
@@ -29,6 +31,12 @@ object QuranMediaItems {
                     .setTitle(surahNames[surahId] ?: surahId.toString())
                     .setArtist(reciterName)
                     .setAlbumTitle(moshaf.name)
+                    // Renseigné ici, ce champ prime sur les métadonnées du flux —
+                    // sinon c'est la pochette embarquée dans le MP3 de mp3quran
+                    // qui s'affiche sur l'écran verrouillé.
+                    .apply {
+                        artwork?.let { setArtworkData(it, MediaMetadata.PICTURE_TYPE_FRONT_COVER) }
+                    }
                     .setIsBrowsable(false)
                     .setIsPlayable(true)
                     .build(),

@@ -79,7 +79,14 @@ class Mp3QuranApi {
 
     private companion object {
         const val TAG = "Mp3QuranApi"
-        const val BASE_URL = "https://mp3quran.net/api/v3"
+
+        /**
+         * ⚠ **Avec le `www.`**, qui n'est pas décoratif : `mp3quran.net/api/v3`
+         * répond **301** vers `www.mp3quran.net/api/v3`. Suivre une redirection
+         * à chaque appel, c'est un aller-retour de plus et une occasion de plus
+         * de perdre le paramètre `language` en route. On vise l'hôte canonique.
+         */
+        const val BASE_URL = "https://www.mp3quran.net/api/v3"
         const val TIMEOUT_MS = 10_000
         const val USER_AGENT = "Miqaat (Android; github.com/mugi21)"
     }

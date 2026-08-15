@@ -178,6 +178,13 @@
     <string name="quran_search_reciter">Rechercher un récitateur</string>
     <string name="quran_favorites">Favoris</string>
     <string name="quran_all_reciters">Tous les récitateurs</string>
+    <string name="quran_all_surahs">Toutes les sourates</string>
+    <string name="quran_now_playing">En cours de lecture</string>
+    <string name="quran_surah_available">%1$d sourates sur %2$d</string>
+    <plurals name="quran_ayahs">
+        <item quantity="one">%d verset</item>
+        <item quantity="other">%d versets</item>
+    </plurals>
     <string name="quran_favorite_add">Ajouter aux favoris</string>
     <string name="quran_favorite_remove">Retirer des favoris</string>
     <string name="quran_no_result">Aucun résultat</string>

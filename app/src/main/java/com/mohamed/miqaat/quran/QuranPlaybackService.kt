@@ -7,10 +7,13 @@ import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.session.DefaultMediaNotificationProvider
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 import com.mohamed.miqaat.MainActivity
+import com.mohamed.miqaat.R
 import com.mohamed.miqaat.data.settings.AppLocale
 import com.mohamed.miqaat.miqaatApp
 import kotlinx.coroutines.CoroutineScope
@@ -41,8 +44,17 @@ class QuranPlaybackService : MediaSessionService() {
         super.attachBaseContext(AppLocale.wrap(base))
     }
 
+    @OptIn(UnstableApi::class)
     override fun onCreate() {
         super.onCreate()
+        // Sans cela, la barre d'état porte la note de musique générique de
+        // Media3 : rien ne dit que la récitation vient de Miqaat.
+        setMediaNotificationProvider(
+            DefaultMediaNotificationProvider.Builder(this).build().apply {
+                setSmallIcon(R.drawable.ic_quran_notification)
+            },
+        )
+
         val player = ExoPlayer.Builder(this)
             .setAudioAttributes(
                 AudioAttributes.Builder()

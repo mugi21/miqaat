@@ -21,6 +21,13 @@ import com.mohamed.miqaat.R
 import com.mohamed.miqaat.ui.labelRes
 
 /**
+ * Hauteur réservée en haut du héros pour la rangée de boutons que l'accueil
+ * superpose : un `IconButton` mesure 48dp, plus les 4dp de marge du `Row`
+ * au-dessus et en dessous.
+ */
+private val ACTION_ROW_HEIGHT = 56.dp
+
+/**
  * En-tête de l'écran : ville, dates, et la prochaine prière en grand
  * avec son compte à rebours. Peint son dégradé derrière la barre de statut.
  */
@@ -43,7 +50,12 @@ fun HeroSection(state: HomeUiState, modifier: Modifier = Modifier) {
                 ),
             )
             .statusBarsPadding()
-            .padding(horizontal = 24.dp, vertical = 24.dp),
+            // ⚠ En haut, la marge doit dégager la rangée de boutons que l'écran
+            // superpose (Qibla, calendrier, adhkār, Coran d'un côté, réglages de
+            // l'autre) : ils sont posés dans un Box par-dessus ce dégradé, et
+            // sans cette hauteur le nom de la ville passait dessous. Depuis la
+            // quatrième icône, le centre libre ne suffit plus sur un écran étroit.
+            .padding(start = 24.dp, end = 24.dp, top = ACTION_ROW_HEIGHT, bottom = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(

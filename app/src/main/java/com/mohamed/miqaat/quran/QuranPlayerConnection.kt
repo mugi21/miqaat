@@ -54,6 +54,13 @@ class QuranPlayerConnection(private val context: Context) {
     private val _state = MutableStateFlow(QuranPlaybackUiState())
     val state: StateFlow<QuranPlaybackUiState> = _state.asStateFlow()
 
+    /**
+     * La pochette à coller sur les éléments de la file. Exposée ici pour que le
+     * ViewModel n'ait pas à connaître un `Context` : le rendu est calculé une
+     * fois puis mémorisé.
+     */
+    val artwork: ByteArray? get() = QuranArtwork.pngBytes(context)
+
     private val listener = object : Player.Listener {
         override fun onEvents(player: Player, events: Player.Events) = publish()
 

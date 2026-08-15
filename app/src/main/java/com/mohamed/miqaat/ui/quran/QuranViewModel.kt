@@ -29,8 +29,6 @@ class QuranViewModel(
     private val player: QuranPlayerConnection,
     private val locationRepository: LocationRepository,
     private val settingsRepository: SettingsRepository,
-    /** Code ISO-639-1 de la langue affichée, pour demander le catalogue traduit. */
-    private val languageTag: String?,
     private val calculator: PrayerTimesCalculator = PrayerTimesCalculator(),
 ) : ViewModel() {
 
@@ -38,6 +36,18 @@ class QuranViewModel(
     val uiState: StateFlow<QuranUiState> = _uiState.asStateFlow()
 
     val playback = player.state
+
+    /**
+     * La langue du catalogue, **relue par l'écran** et non capturée à la
+     * construction.
+     *
+     * ⚠ C'est le correctif d'un défaut réel : un changement de langue appelle
+     * `recreate()`, mais un `ViewModel` **survit** à la recréation de l'activité
+     * (c'est tout son intérêt). Le code de langue capturé au premier affichage
+     * ne changeait donc jamais, et le catalogue restait dans la langue du
+     * premier chargement jusqu'à la mort du processus.
+     */
+    private var language: Mp3QuranLanguage? = null
 
     init {
         player.connect()
@@ -53,14 +63,22 @@ class QuranViewModel(
                 _uiState.update { it.copy(favorites = favorites) }
             }
         }
+    }
+
+    /** Appelé par l'écran à chaque composition, avec la langue réellement affichée. */
+    fun setLanguage(tag: String?) {
+        val requested = Mp3QuranLanguage.forTag(tag)
+        if (language == requested) return
+        language = requested
         refresh()
     }
 
     /** @param force le bouton « réessayer » : ignore la fraîcheur du cache. */
     fun refresh(force: Boolean = false) {
+        val language = language ?: return
         viewModelScope.launch {
             _uiState.update { it.copy(loading = true, failedToLoad = false) }
-            val result = repository.refreshIfNeeded(Mp3QuranLanguage.forTag(languageTag), force)
+            val result = repository.refreshIfNeeded(language, force)
             _uiState.update {
                 it.copy(
                     loading = false,
@@ -139,6 +157,7 @@ class QuranViewModel(
                 reciterName = reciter.name,
                 surahIds = queue,
                 surahNames = catalog.suwar.associate { it.id to it.name },
+                artwork = player.artwork,
             ),
             startIndex = 0,
         )

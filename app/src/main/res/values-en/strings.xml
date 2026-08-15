@@ -178,6 +178,13 @@
     <string name="quran_search_reciter">Search for a reciter</string>
     <string name="quran_favorites">Favourites</string>
     <string name="quran_all_reciters">All reciters</string>
+    <string name="quran_all_surahs">All surahs</string>
+    <string name="quran_now_playing">Now playing</string>
+    <string name="quran_surah_available">%1$d of %2$d surahs</string>
+    <plurals name="quran_ayahs">
+        <item quantity="one">%d verse</item>
+        <item quantity="other">%d verses</item>
+    </plurals>
     <string name="quran_favorite_add">Add to favourites</string>
     <string name="quran_favorite_remove">Remove from favourites</string>
     <string name="quran_no_result">No results</string>

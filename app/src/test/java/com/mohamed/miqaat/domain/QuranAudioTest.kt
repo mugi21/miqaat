@@ -71,3 +71,41 @@ class QuranAudioTest {
         assertTrue(QuranAudio.queueFrom(partiel, 50).isEmpty())
     }
 }
+
+/**
+ * Le décompte des versets est en dur (l'API ne le donne pas). Une faute de
+ * frappe dans 114 nombres serait invisible à l'œil : c'est la somme connue du
+ * décompte de Kūfa qui la rend détectable.
+ */
+class SurahAyahCountTest {
+
+    @Test
+    fun `les 114 sourates ont un decompte`() {
+        (Surah.FIRST_ID..Surah.LAST_ID).forEach { id ->
+            assertTrue("sourate $id", Surah.ayahCountOf(id) > 0)
+        }
+    }
+
+    @Test
+    fun `la somme des versets vaut le total du decompte de Kufa`() {
+        val total = (Surah.FIRST_ID..Surah.LAST_ID).sumOf(Surah::ayahCountOf)
+        assertEquals(Surah.TOTAL_AYAHS, total)
+    }
+
+    @Test
+    fun `quelques reperes connus`() {
+        assertEquals(7, Surah.ayahCountOf(1))     // al-Fātiḥa
+        assertEquals(286, Surah.ayahCountOf(2))   // al-Baqara, la plus longue
+        assertEquals(110, Surah.ayahCountOf(18))  // al-Kahf
+        assertEquals(83, Surah.ayahCountOf(36))   // Yā-Sīn
+        assertEquals(78, Surah.ayahCountOf(55))   // ar-Raḥmān
+        assertEquals(30, Surah.ayahCountOf(67))   // al-Mulk
+        assertEquals(6, Surah.ayahCountOf(114))   // an-Nās
+    }
+
+    @Test
+    fun `un numero hors bornes ne leve pas`() {
+        assertEquals(0, Surah.ayahCountOf(0))
+        assertEquals(0, Surah.ayahCountOf(115))
+    }
+}

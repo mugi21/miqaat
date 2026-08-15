@@ -16,6 +16,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,6 +47,12 @@ fun QuranScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val playback by viewModel.playback.collectAsStateWithLifecycle()
+
+    // La langue **affichée**, relue à chaque composition : le ViewModel survit à
+    // la recréation d'activité que provoque un changement de langue, il ne peut
+    // donc pas la retenir lui-même.
+    val languageTag = LocalConfiguration.current.locales[0].language
+    LaunchedEffect(languageTag) { viewModel.setLanguage(languageTag) }
 
     // Enregistré après celui de MainActivity, donc prioritaire : depuis les
     // sourates, « retour » ramène aux récitateurs et non à l'accueil.
@@ -103,8 +110,9 @@ fun QuranScreen(
                         SectionLabel(stringResource(R.string.quran_choose_reciter))
                     }
                     reciterList(
-                        reciters = state.visibleReciters,
-                        favoriteIds = state.favorites.reciterIds,
+                        favorites = state.favoriteReciters,
+                        others = state.otherReciters,
+                        hasNoMatch = state.hasNoMatch,
                         query = state.query,
                         onQueryChange = viewModel::setQuery,
                         onSelect = { viewModel.selectReciter(it.id) },
@@ -140,9 +148,6 @@ fun QuranScreen(
 @Composable
 private fun quranViewModel(): QuranViewModel {
     val app = LocalContext.current.miqaatApp
-    // La langue **affichée**, celle du contexte de l'activité : elle tient déjà
-    // compte du choix fait dans les réglages (AppLocale habille le contexte).
-    val languageTag = LocalConfiguration.current.locales[0].language
     return viewModel {
         QuranViewModel(
             repository = app.quranCatalogRepository,
@@ -150,7 +155,6 @@ private fun quranViewModel(): QuranViewModel {
             player = app.quranPlayer,
             locationRepository = app.locationRepository,
             settingsRepository = app.settingsRepository,
-            languageTag = languageTag,
         )
     }
 }

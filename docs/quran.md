@@ -47,6 +47,12 @@ aller plus loin.
 
 C'est `domain/QuranAudio.kt`, et rien d'autre dans l'app ne construit d'URL.
 
+### ⚠ L'hôte canonique porte le `www.`
+
+`https://mp3quran.net/api/v3/…` répond **301** vers `https://www.mp3quran.net/…`.
+`BASE_URL` vise donc directement l'hôte avec `www.` : un aller-retour de moins à
+chaque appel, et une occasion de moins de perdre le paramètre `language` en route.
+
 ### Trois pièges relevés à la mesure
 
 **① Les codes de langue ne sont pas ceux d'Android.** Vérifié sur
@@ -91,6 +97,15 @@ Le catalogue n'existe **que dans une langue à la fois** : les noms ne sont que 
 translittérations, garder trois copies ne vaudrait pas la complexité. Un
 changement de langue le refait entièrement.
 
+⚠ **La langue se relit à chaque composition, elle ne se capture jamais.** Le
+`QuranViewModel` ne reçoit pas de code de langue à la construction : c'est
+`QuranScreen` qui appelle `setLanguage()` dans un `LaunchedEffect(languageTag)`.
+Raison : changer la langue appelle `recreate()`, mais un `ViewModel` **survit** à
+la recréation de l'activité — c'est tout son intérêt. Un code capturé au premier
+affichage ne changeait donc jamais, et le catalogue restait dans la langue du
+premier chargement jusqu'à la mort du processus. C'était un défaut réel, remonté
+depuis un appareil.
+
 Un échec réseau ne bloque que si l'on n'a rien à montrer. Avec un cache en place,
 l'écran reste utilisable et l'échec est silencieux.
 
@@ -124,6 +139,24 @@ téléphone et non celle choisie dans l'app.
 
 ⚠ `onTaskRemoved` arrête le service si rien ne joue, sinon une notification
 fantôme survivrait à la fermeture de l'application.
+
+### La notification média
+
+⚠ **Sans pochette explicite, ce n'est pas une pochette vide qui s'affiche mais
+celle de mp3quran** : leurs fichiers MP3 portent une image ID3 embarquée, et
+`ExoPlayerImpl.buildUpdatedMediaMetadata()` complète les métadonnées du flux avec
+celles de l'élément de la file — l'élément gagne pour tout champ qu'il renseigne,
+et perd pour tout champ qu'il laisse vide. Le titre et le récitateur étaient donc
+corrects, la pochette non.
+
+`quran/QuranArtwork` dessine le logo Miqaat sur le vert de la marque et rend un
+PNG, posé par `setArtworkData` sur chaque élément. Dessiné à la volée depuis
+`ic_launcher_foreground` plutôt que livré en bitmap : le logo a déjà une source
+unique, réutilisée par l'icône et l'écran de démarrage.
+
+La petite icône de la barre d'état passe par
+`DefaultMediaNotificationProvider.setSmallIcon(ic_quran_notification)` — sinon
+c'est la note de musique générique de Media3, qui ne dit pas d'où vient le son.
 
 ### Le mini-lecteur
 

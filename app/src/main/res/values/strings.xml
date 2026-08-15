@@ -189,6 +189,17 @@
     <string name="quran_search_reciter">ابحث عن قارئ</string>
     <string name="quran_favorites">المفضّلة</string>
     <string name="quran_all_reciters">كلّ القرّاء</string>
+    <string name="quran_all_surahs">كلّ السور</string>
+    <string name="quran_now_playing">قيد التشغيل</string>
+    <string name="quran_surah_available">%1$d سورة من %2$d</string>
+    <plurals name="quran_ayahs">
+        <item quantity="zero">%d آية</item>
+        <item quantity="one">آية واحدة</item>
+        <item quantity="two">آيتان</item>
+        <item quantity="few">%d آيات</item>
+        <item quantity="many">%d آية</item>
+        <item quantity="other">%d آية</item>
+    </plurals>
     <string name="quran_favorite_add">إضافة إلى المفضّلة</string>
     <string name="quran_favorite_remove">إزالة من المفضّلة</string>
     <string name="quran_no_result">لا توجد نتيجة</string>
