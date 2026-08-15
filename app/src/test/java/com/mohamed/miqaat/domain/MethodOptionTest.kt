@@ -26,58 +26,44 @@ class MethodOptionTest {
         calculator.calculate(38.7223, -9.1393, date, ZoneId.of("Europe/Lisbon"), method)
 
     @Test
-    fun `l'Algerie a les memes angles que MWL, au Maghrib pres`() {
-        val algeria = skikda(MethodOption.ALGERIA)
-        val mwl = skikda(MethodOption.MUSLIM_WORLD_LEAGUE)
+    fun `l'Algerie reprend les angles de MWL`() {
+        // Le calendrier algérien ne se distingue pas par ses angles mais par sa
+        // calibration (marge de précaution + point de référence) — voir
+        // AlgeriaOfficialCalendarTest, qui la verrouille sur un mois entier.
+        val mwl = MethodOption.MUSLIM_WORLD_LEAGUE.parameters
+        val algeria = MethodOption.ALGERIA.parameters
 
-        // Mêmes angles (18°/17°) → mêmes horaires. Deux exceptions : le Dhuhr peut
-        // différer d'une minute (la librairie Adhan ajoute +1 min de précaution à MWL,
-        // absent de la spécification AlAdhan des méthodes nationales), et le Maghrib
-        // porte la marge de 3 min du calendrier officiel algérien.
-        val sameAsMwl = PrayerName.entries.filter {
-            it != PrayerName.DHUHR && it != PrayerName.MAGHRIB
-        }
-        for (prayer in sameAsMwl) {
-            assertEquals(prayer.name, mwl.timeOf(prayer), algeria.timeOf(prayer))
-        }
-        assertEquals(
-            Duration.ofMinutes(3),
-            Duration.between(mwl.timeOf(PrayerName.MAGHRIB), algeria.timeOf(PrayerName.MAGHRIB)),
-        )
-        val dhuhrGap = Duration.between(
-            algeria.timeOf(PrayerName.DHUHR), mwl.timeOf(PrayerName.DHUHR),
-        ).abs()
-        assertTrue("écart Dhuhr: $dhuhrGap", dhuhrGap <= Duration.ofMinutes(1))
+        assertEquals(mwl.fajrAngle, algeria.fajrAngle, 0.0)
+        assertEquals(mwl.ishaAngle, algeria.ishaAngle, 0.0)
     }
 
     @Test
-    fun `le Maghrib algerien colle au calendrier officiel sur deux saisons`() {
-        // Relevés sur le calendrier officiel à Skikda, à quatre mois d'écart :
-        // la marge de 3 min est constante, ce n'est pas un artefact d'arrondi.
-        val zone = ZoneId.of("Africa/Algiers")
-        val officialMaghrib = mapOf(
-            LocalDate.of(2026, 8, 6) to LocalTime.of(19, 37),
-            LocalDate.of(2026, 12, 15) to LocalTime.of(17, 20),
-        )
+    fun `la calibration algerienne retarde de moins de deux minutes, sauf le Maghrib`() {
+        val algeria = skikda(MethodOption.ALGERIA)
+        val mwl = skikda(MethodOption.MUSLIM_WORLD_LEAGUE)
 
-        for ((day, expected) in officialMaghrib) {
-            val times = calculator.calculate(36.8665, 6.9063, day, zone, MethodOption.ALGERIA)
-            assertEquals(
-                "Maghrib du $day",
-                expected,
-                times.timeOf(PrayerName.MAGHRIB).toLocalTime().withSecond(0).withNano(0),
+        for (prayer in PrayerName.entries) {
+            val gap = Duration.between(mwl.timeOf(prayer), algeria.timeOf(prayer))
+            // Le Maghrib porte 3 minutes de plus que les autres moments (D23).
+            val most = if (prayer == PrayerName.MAGHRIB) Duration.ofMinutes(5) else Duration.ofMinutes(2)
+            assertTrue(
+                "$prayer : écart $gap",
+                gap >= Duration.ofMinutes(-1) && gap <= most,
             )
         }
     }
 
     @Test
-    fun `la marge algerienne du Maghrib ne decale pas l'Isha`() {
+    fun `la marge algerienne du Maghrib ne se propage pas a l'Isha`() {
         // L'Isha algérienne est calculée par angle (17°), pas par intervalle depuis
-        // le coucher : contrairement au Portugal, elle n'hérite pas de l'ajustement.
-        assertEquals(
+        // le coucher : contrairement au Portugal, elle n'hérite pas de la marge.
+        assertEquals(0, MethodOption.ALGERIA.parameters.ishaInterval)
+
+        val gap = Duration.between(
             skikda(MethodOption.MUSLIM_WORLD_LEAGUE).timeOf(PrayerName.ISHA),
             skikda(MethodOption.ALGERIA).timeOf(PrayerName.ISHA),
         )
+        assertTrue("écart Isha: $gap", gap.abs() <= Duration.ofMinutes(1))
     }
 
     @Test

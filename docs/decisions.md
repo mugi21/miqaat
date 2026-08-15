@@ -716,3 +716,40 @@ réglages Android. Ce qui est gagné : un réglage unique qui vaut pour tout ce 
 l'application émet — c'est ce que l'utilisateur a demandé, et c'est plus facile à
 expliquer qu'une exception. Ce qui reste de D27 : l'importance `DEFAULT` du canal,
 un dhikr n'ayant ni la durée ni l'urgence d'un adhan.
+
+## D40 — L'arrondi à la minute appartient à l'app, et la marge officielle se mesure en secondes
+
+Adhan calcule à la seconde puis arrondit **à la minute la plus proche**. Un calendrier
+de ministère ne fait jamais ça : il ajoute une marge de précaution puis tronque, pour
+que l'heure annoncée ne tombe jamais *avant* l'heure calculée. L'app pouvait donc
+annoncer jusqu'à trente secondes trop tôt, et l'écart se voyait ou non selon les
+secondes du jour — d'où un défaut qui paraissait aléatoire.
+
+`PrayerTimesCalculator` demande désormais `Rounding.NONE` à la librairie et tranche
+lui-même, via la `calibration` de la méthode (`domain/model/TimeCalibration.kt`) :
+un décalage **par moment, en secondes**, puis un arrondi choisi. L'ordre compte —
+l'arrondi doit voir la marge, l'inverse déplacerait le résultat d'une minute.
+
+Trois raisons de ne pas laisser faire Adhan : sa politique d'arrondi est unique pour
+les six moments, alors que le shurūq (fin du Fajr) doit être tronqué quand les prières
+sont retardées ; ses `PrayerAdjustments` ne s'expriment qu'en minutes entières ; et
+travailler sur les secondes brutes rend l'écart **mesurable**, donc vérifiable par un test.
+
+Des secondes et non des minutes, parce que la mesure le commande : sur les trente jours
+du calendrier officiel de Skikda, un décalage en minutes entières ne reproduit que 25 à
+29 lignes sur 30 selon le moment, là où le décalage en secondes les reproduit toutes. La
+méthode de mesure et les valeurs relevées sont dans
+[prayer-times-accuracy.md](prayer-times-accuracy.md).
+
+**Rien ne change pour les autres méthodes** : la calibration par défaut reproduit
+exactement le comportement d'Adhan. Une méthode ne s'en écarte qu'après mesure sur un
+mois entier.
+
+### D23 est amendée
+
+D23 avait relevé les 3 minutes du Maghrib algérien sur **deux dates**, en comparant
+« contre une autre app ». Les trois minutes sont confirmées — on les retrouve dans les
+261 secondes du Maghrib, contre ~85 pour les autres moments. Mais deux points de mesure
+ne pouvaient pas séparer la marge de l'arrondi, et le même diagnostic avait écarté à
+tort un écart sur l'ʿAṣr comme « faux positif » : il était réel. Une marge officielle se
+mesure sur un mois, pas sur deux dates.

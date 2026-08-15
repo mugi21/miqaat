@@ -48,17 +48,18 @@ class PrayerTimeAdjustmentsTest {
     }
 
     @Test
-    fun `l'ajustement manuel s'ajoute a la marge de la methode, sans l'effacer`() {
-        // L'Algérie porte déjà +3 min sur le Maghrib (D23) : +2 manuel doit donner +5.
-        val mwl = calculator.calculate(36.8665, 6.9063, date, zone, MethodOption.MUSLIM_WORLD_LEAGUE)
-        val algeria = calculator.calculate(
+    fun `l'ajustement manuel s'ajoute a la calibration de la methode, sans l'effacer`() {
+        // L'Algérie porte déjà sa marge officielle sur le Maghrib : +2 manuel doit
+        // décaler de 2 minutes de plus, pas ramener le moment au calcul brut.
+        val plain = calculator.calculate(36.8665, 6.9063, date, zone, MethodOption.ALGERIA)
+        val tuned = calculator.calculate(
             36.8665, 6.9063, date, zone, MethodOption.ALGERIA,
             adjustments = PrayerTimeAdjustments().with(PrayerName.MAGHRIB, 2),
         )
 
         assertEquals(
-            Duration.ofMinutes(5),
-            Duration.between(mwl.timeOf(PrayerName.MAGHRIB), algeria.timeOf(PrayerName.MAGHRIB)),
+            Duration.ofMinutes(2),
+            Duration.between(plain.timeOf(PrayerName.MAGHRIB), tuned.timeOf(PrayerName.MAGHRIB)),
         )
     }
 

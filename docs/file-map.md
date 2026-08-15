@@ -13,7 +13,7 @@ Package racine : `com.mohamed.miqaat` (`app/src/main/java/com/mohamed/miqaat/`).
 
 | Fichier | Rôle |
 |---|---|
-| `PrayerTimesCalculator.kt` | Enveloppe d'Adhan : coordonnées + date + méthode + madhab → `DailyPrayerTimes`. |
+| `PrayerTimesCalculator.kt` | Enveloppe d'Adhan : coordonnées + date + méthode + madhab → `DailyPrayerTimes`. Demande les secondes brutes (`Rounding.NONE`) et applique lui-même la calibration de la méthode. Voir D40. |
 | `NextPrayerResolver.kt` | Prochaine prière, jamais null (après l'Isha → Fajr du lendemain). Sert à l'**affichage**. |
 | **`PrayerEventResolver.kt`** | Évènements de prière : rappel avant l'adhan ou adhan (`PrayerEvent`, `PrayerEventKind`). Voir D17. |
 | **`AlarmEventResolver.kt`** | Prochain évènement de la chaîne, prières **et** invocations (`ScheduledEvent`) ; porte la garde de dix minutes qui protège l'adhan. Voir D25 et [invocations.md](invocations.md). |
@@ -27,7 +27,8 @@ Package racine : `com.mohamed.miqaat` (`app/src/main/java/com/mohamed/miqaat/`).
 | `AutoMethodResolver.kt` | Code pays ISO → méthode de calcul ; `CalculationSettings.effectiveMethod()`. |
 | **`QiblaCalculator.kt`** | Azimut de la Qibla (grand cercle) et distance à la Kaaba (haversine) + utilitaires d'angles (`normalizeDegrees`, `shortestAngleDelta`, `isAlignedWithQibla`, `lerpDegrees`). |
 | `model/PrayerName.kt`, `model/DailyPrayerTimes.kt` | Les six moments du jour. |
-| `model/MethodOption.kt` | Les 21 méthodes de calcul (11 d'Adhan + 10 nationales reconstruites). |
+| `model/MethodOption.kt` | Les 21 méthodes de calcul (11 d'Adhan + 10 nationales reconstruites), chacune avec sa `TimeCalibration`. |
+| **`model/TimeCalibration.kt`** | Décalage en secondes par moment + arrondi à la minute (`MinuteRounding`) : comment une méthode colle à son calendrier officiel. Voir D40 et [prayer-times-accuracy.md](prayer-times-accuracy.md). |
 | `model/CalculationSettings.kt` | Méthode, mode auto, madhab, décalage hégirien, ajustements manuels. |
 | **`model/PrayerTimeAdjustments.kt`** | Minutes ajoutées manuellement à chaque moment (±30). S'additionnent à la marge de la méthode ; les zéros ne sont jamais stockés. Voir D24. |
 | **`model/ReminderSettings.kt`** | Rappel avant l'adhan : actif ou non, délai (`LEAD_CHOICES`, minimum 10 min — voir D18). |
@@ -131,7 +132,7 @@ fiabilité**. Tous en JVM pur, aucun émulateur nécessaire.
 | Évolution | Fichiers |
 |---|---|
 | Ajouter une méthode de calcul nationale | `model/MethodOption.kt` + `AutoMethodResolver.kt` + les trois `strings.xml` + `SettingsScreen.selectableMethods` |
-| Corriger la marge officielle d'un pays | `model/MethodOption.kt` (`maghribMinutes`…), **après mesure sur deux dates éloignées** — voir D23 |
+| Corriger la marge officielle d'un pays | `model/MethodOption.kt` (la `calibration`), **après mesure sur un mois entier** — protocole dans [prayer-times-accuracy.md](prayer-times-accuracy.md) |
 | Ajouter une entrée au calcul des horaires | `PrayerTimesCalculator.calculate` + ses **quatre** appelants : accueil, calendrier, `PrayerAlarmScheduler`, `NextPrayerWidgetViews` |
 | Ajouter un écran | `MainActivity.Screen` + un dossier `ui/<écran>/` |
 | Changer le logo ou l'écran de démarrage | `res/drawable/ic_launcher_foreground.xml` (le dessin, réutilisé partout) · `splash_background` + `SplashGradient*` **ensemble** · `ui/splash/SplashScreen.kt` pour le texte · `SPLASH_DURATION_MS` pour la durée |

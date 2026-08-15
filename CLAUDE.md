@@ -71,12 +71,13 @@ Depuis la session 5, `docs/` complète ce fichier — voir [docs/INDEX.md](docs/
 `dev-workflow.md` (build, rituel, conventions), `decisions.md` (choix d'architecture
 et leurs raisons), `file-map.md` (carte des fichiers), `i18n.md` (multilingue),
 `notifications.md` (chaîne, canaux, mode d'alerte), `reliability.md` (pourquoi
-l'adhan n'arrive pas et comment le réparer).
+l'adhan n'arrive pas et comment le réparer), `prayer-times-accuracy.md` (coller à un
+calendrier officiel : arrondi, marge de précaution, protocole de mesure).
 `CLAUDE.md` reste la mémoire vivante : vision, stack, roadmap, État actuel.
 
 ## État actuel
 
-**Dernière mise à jour : 2026-08-09 (fin de session 12)**
+**Dernière mise à jour : 2026-08-15 (fin de session 13)**
 
 ### Fait (session 1)
 - Squelette Android Studio (AGP 9.2.1, Kotlin 2.2.10, Compose BOM 2026.02.01, minSdk 26, targetSdk 36)
@@ -274,7 +275,24 @@ Retour d'appareil : **aucune notification n'arrivait** sur le Redmi Note 8 (Andr
 - **108 tests JVM verts** (29 nouveaux : matrice 12 cases + invariants, garde de fraîcheur dont le verrou rappel < délai minimal, parsing du mode, verdict de fiabilité dont la règle anti-harcèlement) ; `assembleDebug` OK
 - **Vérifié sur le Redmi Note 8** : release signée installée par-dessus la précédente (même clé, aucune donnée perdue), l'utilisateur confirme que les notifications arrivent. Restent à éprouver dans la durée le verdict `DELIVERY` sur une nuit entière et la matrice complète du mode d'alerte (voir « Prochaine étape »)
 
+### Fait (session 13) — précision des horaires : l'arrondi et la marge officielle
+Retour d'appareil : écarts d'une à deux minutes contre le calendrier officiel de Skikda, « sur certains moments seulement, sans logique apparente ». L'utilisateur soupçonnait la position GPS. Ce n'était pas ça.
+
+- **Diagnostic (décision D40)** : Adhan calcule à la seconde puis **arrondit à la minute la plus proche** (`Rounding.NEAREST` par défaut, vérifié dans le bytecode de `CalendarUtil.roundedMinute` : `minute + round(sec/60)`). Un ministère ne fait jamais ça : il ajoute une marge de précaution (iḥtiyāṭ) puis **tronque**, pour que l'heure annoncée ne tombe jamais *avant* l'heure calculée. L'app pouvait donc annoncer jusqu'à 30 s trop tôt, et l'écart se voyait ou non selon les secondes du jour — d'où un défaut qui paraissait aléatoire. La position, elle, ne pèse que **~4 s/km** (mesuré en session 8) : il faudrait être à ~20 km du point de référence pour perdre une minute
+- **Mesure sur un mois entier**, pas sur deux dates : calendrier officiel de la مديرية الشؤون الدينية والأوقاف — سكيكدة, Rabīʿ al-Awwal 1448 (14 août → 12 septembre 2026), 30 jours × 5 moments. Horaires bruts sortis à la seconde (`Rounding.NONE`, sans marge), puis ajustement d'un décalage constant par prière : chaque jour contraint le décalage à un intervalle de 60 s, l'intersection des 30 le donne à quelques secondes près. **Une intersection vide est une information** — c'est ce qui a révélé une erreur de transcription et la dérive de l'ʿAṣr
+- **État avant correction, chiffré** : sur ces 30 jours, l'app tombait juste sur **1 ligne de Fajr, 1 de Ẓuhr, 0 d'ʿAṣr, 5 de Maghrib, 4 d'ʿIshāʾ**. Elle n'était pas « parfois décalée » : elle était presque systématiquement une minute en avance
+- **`domain/model/TimeCalibration.kt`** (créé) : `MinuteRounding` (NEAREST/DOWN/UP) + un décalage **en secondes par moment**, appliqué **avant** l'arrondi (l'ordre compte : arrondir d'abord déplace le résultat d'une minute). `PrayerTimesCalculator` demande désormais `Rounding.NONE` à Adhan et tranche lui-même. Des secondes et non des minutes parce que la mesure le commande : en minutes entières le meilleur modèle ne reproduit que 25 à 29 lignes sur 30 selon le moment
+- **`MethodOption.ALGERIA` calibrée** : Fajr +95 s, Ẓuhr +85 s, ʿAṣr +126 s, Maghrib +261 s, ʿIshāʾ +82 s, puis troncature → **143 cases justes sur 150**. Les cinq nombres se lisent en deux termes : une base d'environ 85 s commune (marge du ministère + point de référence de la ville) et, sur le seul Maghrib, **3 minutes de plus** — 261 ≈ 85 + 176, soit la marge de D23 confirmée sur trente jours au lieu de deux
+- **Règle d'arbitrage : jamais en avance.** L'ʿAṣr et l'ʿIshāʾ dérivent d'une dizaine de secondes sur le mois, aucun décalage constant ne les rend exacts partout. On choisit le côté tardif sans exception — une minute de retard est sans conséquence, une minute d'avance fait prier avant l'heure. Coût : deux jours exacts sur l'ʿAṣr (126 s plutôt que 120)
+- **Hypothèse écartée** : la dérive pouvait venir de coordonnées différentes (le Ẓuhr ne dépend que de la longitude, l'ʿAṣr et l'ʿIshāʾ aussi de la latitude). Un balayage ±0,30° au pas de 0,01° trouve des couples qui rendent les cinq décalages constants, mais tous demandent une latitude ~0,20° plus au sud — 22 km dans les terres, ce qui ne décrit pas le chef-lieu d'une wilaya côtière — et les marges y restent inégales d'un moment à l'autre. Écartée
+- **D23 amendée** : ses 3 minutes de Maghrib sont confirmées, mais deux points de mesure ne pouvaient pas séparer la marge de l'arrondi, et le même diagnostic avait écarté à tort un écart sur l'ʿAṣr comme « faux positif » — il était réel. Le relevé de décembre 2026 (Maghrib 17:20) ne s'accorde pas à cette calibration ; il venait d'une comparaison « contre une autre app », pas du ministère, donc c'est l'image officielle qui fait foi. Un calendrier d'hiver officiel tranchera
+- **`docs/prayer-times-accuracy.md`** (créé) : les trois sources d'écart, le protocole de mesure réutilisable pour tout pays, le relevé de Skikda et ce qui reste ouvert
+- **Rien ne change pour les autres méthodes** : la calibration par défaut reproduit exactement le comportement d'Adhan, et un test le verrouille. **Aucun texte d'interface nouveau**, donc rien à traduire — la correction est entièrement interne
+- **120 tests JVM verts** (12 nouveaux : 7 sur l'arrondi et l'ordre décalage/arrondi, 5 sur le calendrier officiel — jamais en avance, jamais plus d'une minute après, Fajr/Ẓuhr/Maghrib exacts les 30 jours, nombre de lignes justes figé pour l'ʿAṣr et l'ʿIshāʾ, place du shurūq) ; `assembleDebug` OK. **Pas de vérification sur appareil** (non demandée cette session)
+
 ### Prochaine étape
+- **Vérifier la correction à l'écran** : à Skikda, méthode auto → Algérie, les horaires affichés doivent être ceux du calendrier papier ; contrôler que l'alarme système suit (`dumpsys alarm`), le widget et le calendrier mensuel aussi
+- **Obtenir un calendrier officiel d'un mois d'hiver** pour Skikda : c'est la seule façon de savoir si la calibration tient sur deux saisons ou si elle est ajustée sur un mois d'été (voir `docs/prayer-times-accuracy.md`, « Ce qui reste ouvert »)
 - **Vérifier sur le Redmi Note 8** (voir `docs/reliability.md`) : ① installer sans rien régler, laisser une nuit → rien n'arrive et `DELIVERY = à corriger` + bannière ; ② suivre les actions de l'écran (autostart, batterie sans restriction) ; ③ nouvelle nuit → les cinq adhans arrivent ; ④ **non-régression du symptôme** : après une nuit sans réglage MIUI, ouvrir l'app à 14h ne doit produire **aucune** notification « approche du Fajr » ; ⑤ `dumpsys package … | grep stopped`
 - Éprouver le mode d'alerte sur appareil avec le bouton « notification de test » : 4 modes × 3 états de sonnerie × (adhan, rappel, invocation), en vérifiant **quel curseur de volume** agit (sonnerie vs alarme), puis les trois filtres DND
 - ✅ **Release v1.1 publiée** (`versionCode 2`) : `v1.0` était déjà taguée et publiée sur le commit initial du 8 août, tout le reste — sessions 11 et 12 — attendait. `gh` n'est pas installé sur cette machine → la release GitHub passe par le formulaire web, les notes de version sont préparées dans `docs/release-notes-v1.1.md`
@@ -288,7 +306,7 @@ Retour d'appareil : **aucune notification n'arrivait** sur le Redmi Note 8 (Andr
 - Vérifier l'ajustement manuel sur appareil : un pas doit décaler l'accueil, le calendrier, le widget **et** l'heure de l'alarme système
 - Invocations : le gros est vérifié sur émulateur (voir ci-dessus). Restent la **création/suppression d'un du'ā** (saisie clavier non testée) et surtout la vérification que **la garde tient sur un vrai appareil en Doze** — poser une invocation 5 min avant le Fajr et contrôler à `dumpsys alarm` que l'adhan n'est pas reporté
 - Relire le contenu des deux adhkār livrés (`invocation_morning_body` / `invocation_evening_body`) : sélection curée, à valider
-- Relever la marge officielle du Maghrib pour la Tunisie et le Maroc (même protocole que D23 : deux dates éloignées)
+- Relever la calibration officielle de la Tunisie et du Maroc (protocole de `docs/prayer-times-accuracy.md` : un calendrier officiel d'un mois entier, pas deux dates)
 - Finir le multilingue : formats de date (accueil **et** calendrier) et géocodage selon la locale
 - Plus tard : activation des notifications par prière · sélection manuelle de ville
 
