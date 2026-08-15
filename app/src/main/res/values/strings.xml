@@ -181,6 +181,44 @@
     <string name="home_reliability_warning">قد لا تصلك إشعارات الصلاة</string>
     <string name="action_later">لاحقًا</string>
 
+    <!-- Écoute du Coran -->
+    <string name="quran_open">الاستماع إلى القرآن</string>
+    <string name="quran_title">الاستماع إلى القرآن</string>
+    <string name="quran_choose_reciter">اختر القارئ</string>
+    <string name="quran_choose_surah">اختر السورة</string>
+    <string name="quran_search_reciter">ابحث عن قارئ</string>
+    <string name="quran_favorites">المفضّلة</string>
+    <string name="quran_all_reciters">كلّ القرّاء</string>
+    <string name="quran_favorite_add">إضافة إلى المفضّلة</string>
+    <string name="quran_favorite_remove">إزالة من المفضّلة</string>
+    <string name="quran_no_result">لا توجد نتيجة</string>
+    <string name="quran_surah_makki">مكّية</string>
+    <string name="quran_surah_madani">مدنية</string>
+    <string name="quran_surah_unavailable">غير متوفّرة عند هذا القارئ</string>
+    <string name="quran_loading">جارٍ تحميل الفهرس…</string>
+    <string name="quran_buffering">جارٍ التحميل…</string>
+    <string name="quran_retry">إعادة المحاولة</string>
+    <string name="quran_offline_title">تعذّر تحميل قائمة القرّاء</string>
+    <string name="quran_offline_message">يحتاج تحميل الفهرس إلى اتصال بالإنترنت مرّة واحدة، ثمّ يبقى محفوظًا في الجهاز.</string>
+    <string name="quran_error_playback">تعذّر التشغيل. تحقّق من الاتصال بالإنترنت.</string>
+    <string name="quran_streaming_hint">التلاوة تُبثّ من الإنترنت ولا تُحفظ في الجهاز. تصفّح القائمة يعمل دون اتصال.</string>
+    <!-- Sourate du moment : suggestion calculée à partir des horaires réels du jour. -->
+    <string name="quran_suggestion_title">سورة هذا الوقت</string>
+    <string name="quran_reason_friday">من سنن يوم الجمعة</string>
+    <string name="quran_reason_before_sleep">تُقرأ قبل النوم</string>
+    <string name="quran_reason_morning">لبداية النهار</string>
+    <string name="quran_reason_evening">بين المغرب والعشاء</string>
+    <string name="quran_reason_anytime">اقتراح لهذا الوقت</string>
+    <!-- Lecteur -->
+    <string name="quran_player_play">تشغيل</string>
+    <string name="quran_player_pause">إيقاف مؤقّت</string>
+    <string name="quran_player_next">السورة التالية</string>
+    <string name="quran_player_previous">السورة السابقة</string>
+    <string name="quran_player_forward">تقديم ١٠ ثوانٍ</string>
+    <string name="quran_player_rewind">تأخير ١٠ ثوانٍ</string>
+    <string name="quran_player_stop">إنهاء التشغيل</string>
+    <string name="quran_player_open">فتح المشغّل</string>
+
     <!-- Widget de l'écran d'accueil -->
     <string name="widget_label">ميقات — الصلاة القادمة</string>
     <string name="widget_description">الصلاة القادمة والوقت المتبقّي ومواقيت اليوم على الشاشة الرئيسية</string>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Mushaf ouvert : deux pages en vis-à-vis, la reliure au centre, et trois
+     lignes de texte évoquées de chaque côté. Symétrique, donc aucun besoin de
+     miroir en RTL — contrairement aux flèches. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M11.25,6.6C10.1,5.6 8.35,5 6.4,5C5.1,5 3.9,5.25 3,5.6C2.4,5.85 2,6.4 2,7.05v10.6c0,0.75 0.7,1.3 1.4,1.1c0.9,-0.25 1.95,-0.4 3,-0.4c1.6,0 3.3,0.35 4.35,1.05c0.15,0.1 0.3,0.15 0.5,0.15V6.6zM12.75,19.55c0.2,0 0.35,-0.05 0.5,-0.15C14.3,18.7 16,18.35 17.6,18.35c1.05,0 2.1,0.15 3,0.4c0.7,0.2 1.4,-0.35 1.4,-1.1V7.05c0,-0.65 -0.4,-1.2 -1,-1.45C20.1,5.25 18.9,5 17.6,5c-1.95,0 -3.7,0.6 -4.85,1.6V19.55z" />
+    <path
+        android:fillColor="@android:color/white"
+        android:fillAlpha="0.0"
+        android:pathData="M0,0h24v24h-24z" />
+</vector>

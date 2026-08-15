@@ -13,6 +13,7 @@ vision, stack, roadmap et **État actuel** mis à jour à chaque fin de session.
 | [notifications.md](notifications.md) | La chaîne d'alarmes, les canaux et leurs identifiants, le mode d'alerte, la garde de fraîcheur |
 | [reliability.md](reliability.md) | Pourquoi l'adhan n'arrive pas : les cinq verrous, les surcouches constructeur, la procédure MIUI |
 | [invocations.md](invocations.md) | Adhkār : invocations livrées et créées, moment du rappel, garde de dix minutes |
+| [quran.md](quran.md) | Écoute du Coran : l'API mp3quran et ses pièges, le cache, le lecteur, la sourate du moment |
 | [release.md](release.md) | Publier une version : clé de signature, build release, tag et release GitHub |
 
 ## Règles de tenue

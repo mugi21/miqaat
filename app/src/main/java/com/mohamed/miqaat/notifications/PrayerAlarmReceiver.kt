@@ -13,6 +13,7 @@ import com.mohamed.miqaat.domain.PrayerEventKind
 import com.mohamed.miqaat.domain.model.Invocation
 import com.mohamed.miqaat.domain.model.PrayerName
 import com.mohamed.miqaat.miqaatApp
+import com.mohamed.miqaat.quran.QuranPlaybackService
 import java.time.Duration
 import java.time.Instant
 
@@ -69,6 +70,7 @@ class PrayerAlarmReceiver : BroadcastReceiver() {
             PrayerNotifications.idOf(prayer, kind),
             PrayerNotifications.build(this, prayer, kind),
         )
+        yieldQuranPlayer(decision)
         // La vibration part d'ici et non du service : l'effet est confié au
         // service système, il survit donc à la mort de notre processus.
         AlertVibrator.vibrate(this, decision.vibration, long = kind == PrayerEventKind.ADHAN)
@@ -96,6 +98,21 @@ class PrayerAlarmReceiver : BroadcastReceiver() {
         )
         AlertVibrator.vibrate(this, decision.vibration, long = false)
         decision.stream?.let { AlertSoundService.start(this, invocation, it) }
+    }
+
+    /**
+     * D43 — la récitation en cours cède la place à l'appel à la prière.
+     *
+     * Uniquement quand l'alerte est **muette** : dès qu'il y a du son,
+     * `AlertSoundService` demande `AUDIOFOCUS_GAIN_TRANSIENT` (D20) et ExoPlayer
+     * se met en pause tout seul — puis **reprend** à la fin de l'adhan, ce qu'un
+     * appel explicite ne saurait pas faire. En mode vibreur ou silencieux, en
+     * revanche, plus aucun service sonore n'est démarré depuis D38 : personne ne
+     * prend le focus, et sans cette ligne la récitation continuerait par-dessus
+     * l'heure de la prière.
+     */
+    private fun yieldQuranPlayer(decision: AlertDecision) {
+        if (decision.stream == null) QuranPlaybackService.pauseForPrayer()
     }
 
     /** Le réglage de l'utilisateur croisé avec l'état sonore du téléphone (D36). */

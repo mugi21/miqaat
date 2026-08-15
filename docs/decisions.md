@@ -753,3 +753,94 @@ D23 avait relevé les 3 minutes du Maghrib algérien sur **deux dates**, en comp
 ne pouvaient pas séparer la marge de l'arrondi, et le même diagnostic avait écarté à
 tort un écart sur l'ʿAṣr comme « faux positif » : il était réel. Une marge officielle se
 mesure sur un mois, pas sur deux dates.
+
+## D41 — L'app demande `INTERNET`, et l'offline-first est précisé
+
+L'écoute du Coran est la **première fonctionnalité en réseau** de Miqaat. La règle
+posée à la session 1 ne tombe pas, elle se précise :
+
+> Aucune fonction **cœur** ne dépend du réseau.
+
+Horaires, alarmes, Qibla, calendrier, adhkār, widget : rien de tout cela ne touche
+à `INTERNET`, et l'application reste entièrement utilisable sans jamais ouvrir
+l'écran du Coran. Ce qui change, c'est qu'il existe désormais une fonctionnalité
+annexe qui, elle, en dépend — et l'interface doit le dire plutôt que de le cacher.
+
+Ce qui **ne** change **pas** : aucun SDK de tracking, d'analytics ni de publicité ;
+un seul hôte contacté (`mp3quran.net` et ses serveurs de fichiers) ; aucune donnée
+envoyée, aucun identifiant, aucun compte. L'API v3 est publique et sans clé.
+
+La baseline `app_tagline` (« مواقيت الصلاة أينما كنت، دون إنترنت ») **reste vraie
+et ne change pas** : elle parle des horaires de prière, qui restent hors ligne.
+
+Conséquence pratique, assumée : le catalogue (récitateurs, sourates) est mis en
+cache dans Room, donc **parcourir** marche hors ligne dès le premier chargement
+réussi. **Écouter** demande le réseau — c'est du streaming, pas du téléchargement.
+
+## D42 — Media3/ExoPlayer, en rupture assumée avec la tradition « zéro dépendance »
+
+Le projet a écarté Glance (D14), WorkManager (D33), AppCompat, `core-splashscreen`
+(D28) et toute librairie de navigation (D7). Chaque fois pour la même raison : la
+dépendance apportait moins que ce qu'elle coûtait.
+
+Media3 fait exception parce qu'il apporte quatre choses qu'on ne réécrit pas
+correctement à la main sur un flux HTTP distant :
+
+1. le **buffering** d'un réseau instable, et la reprise après coupure ;
+2. le **focus audio** — dont dépend directement D43 ;
+3. la **notification média** et l'écran verrouillé (`MediaSession`), avec les
+   contrôles système, l'Assistant et Android Auto ;
+4. la file d'attente et l'enchaînement des pistes.
+
+Un `MediaPlayer` maison ferait la première minute correctement et échouerait sur
+tout le reste. Coût mesuré : ~2,5 Mo d'APK.
+
+`media3-exoplayer` + `media3-session` **seulement**. Pas `media3-ui`, qui est en
+Views et n'apporte rien à une interface Compose.
+
+⚠ `QuranPlaybackService` est déclaré `exported="true"` au manifeste. Ce n'est pas
+une inattention : `MediaSessionService` l'exige, sans quoi les contrôles système
+ne peuvent pas se lier à la session.
+
+## D43 — Le lecteur cède la place à l'adhan, par deux chemins et non un seul
+
+C'est ce que Miqaat peut faire et qu'aucune application de récitation seule ne
+peut : la récitation en cours **s'arrête à l'heure de la prière**. Deux chemins,
+parce que l'app a deux régimes sonores depuis D38.
+
+**Quand l'alerte a du son** — rien à écrire. `AlertSoundService` demande déjà
+`AUDIOFOCUS_GAIN_TRANSIENT` (D20), et ExoPlayer construit avec
+`setAudioAttributes(attrs, handleAudioFocus = true)` se met en pause puis
+**reprend seul** à la fin de l'adhan. C'est exactement le comportement mesuré à la
+milliseconde en session 10 sur le Redmi Note 8, avec un lecteur de Coran tiers ;
+la seule différence est que le lecteur est maintenant le nôtre.
+
+**Quand l'alerte est muette** — en mode vibreur ou silencieux, plus aucun service
+sonore n'est démarré depuis D38. Personne ne prend le focus audio, et sans
+intervention la récitation continuerait par-dessus l'heure de la prière.
+`PrayerAlarmReceiver` appelle donc explicitement
+`QuranPlaybackService.pauseForPrayer()`.
+
+La règle qui évite le double comportement tient en une ligne :
+
+```kotlin
+if (decision.stream == null) QuranPlaybackService.pauseForPrayer()
+```
+
+Pas de reprise automatique dans ce second cas : rien ne signalerait la fin de
+l'évènement. Le mini-lecteur reste visible, une tape relance.
+
+**Une invocation ne met rien en pause.** Un dhikr dure quelques secondes et
+emprunte déjà `AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK` (D39) : il atténue, il
+n'interrompt pas. Interrompre une récitation pour l'annoncer serait
+disproportionné — même raisonnement qui avait fondé D27.
+
+Le service est joignable par une **référence statique** et non par un
+`MediaController` : il tourne dans le processus de l'application, tout comme le
+receiver d'alarme, et `onReceive` doit rendre la main immédiatement — ouvrir une
+connexion asynchrone n'aboutirait pas à temps.
+
+⚠ La chaîne d'alarmes n'apprend pas l'existence du lecteur : ni
+`PrayerAlarmScheduler`, ni `AlarmEventResolver`, ni `AlertSoundService` ne sont
+touchés. C'est le receiver seul qui fait le lien, et il le fait **après** avoir
+posé la notification. La ponctualité de l'adhan ne dépend en rien du Coran.

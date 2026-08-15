@@ -170,6 +170,44 @@
     <string name="home_reliability_warning">Les notifications de prière risquent de ne pas arriver</string>
     <string name="action_later">Plus tard</string>
 
+    <!-- Écoute du Coran -->
+    <string name="quran_open">Écouter le Coran</string>
+    <string name="quran_title">Écoute du Coran</string>
+    <string name="quran_choose_reciter">Choisir un récitateur</string>
+    <string name="quran_choose_surah">Choisir une sourate</string>
+    <string name="quran_search_reciter">Rechercher un récitateur</string>
+    <string name="quran_favorites">Favoris</string>
+    <string name="quran_all_reciters">Tous les récitateurs</string>
+    <string name="quran_favorite_add">Ajouter aux favoris</string>
+    <string name="quran_favorite_remove">Retirer des favoris</string>
+    <string name="quran_no_result">Aucun résultat</string>
+    <string name="quran_surah_makki">Mecquoise</string>
+    <string name="quran_surah_madani">Médinoise</string>
+    <string name="quran_surah_unavailable">Indisponible chez ce récitateur</string>
+    <string name="quran_loading">Chargement du catalogue…</string>
+    <string name="quran_buffering">Chargement…</string>
+    <string name="quran_retry">Réessayer</string>
+    <string name="quran_offline_title">Impossible de charger la liste des récitateurs</string>
+    <string name="quran_offline_message">Le catalogue demande une connexion Internet une seule fois, puis il reste enregistré sur l\'appareil.</string>
+    <string name="quran_error_playback">Lecture impossible. Vérifiez votre connexion Internet.</string>
+    <string name="quran_streaming_hint">La récitation est diffusée depuis Internet et n\'est pas enregistrée sur l\'appareil. Parcourir la liste fonctionne hors ligne.</string>
+    <!-- Sourate du moment : suggestion calculée à partir des horaires réels du jour. -->
+    <string name="quran_suggestion_title">La sourate du moment</string>
+    <string name="quran_reason_friday">Une sunna du vendredi</string>
+    <string name="quran_reason_before_sleep">À lire avant de dormir</string>
+    <string name="quran_reason_morning">Pour commencer la journée</string>
+    <string name="quran_reason_evening">Entre le Maghreb et l\'Icha</string>
+    <string name="quran_reason_anytime">Une suggestion pour maintenant</string>
+    <!-- Lecteur -->
+    <string name="quran_player_play">Lecture</string>
+    <string name="quran_player_pause">Pause</string>
+    <string name="quran_player_next">Sourate suivante</string>
+    <string name="quran_player_previous">Sourate précédente</string>
+    <string name="quran_player_forward">Avancer de 10 secondes</string>
+    <string name="quran_player_rewind">Reculer de 10 secondes</string>
+    <string name="quran_player_stop">Arrêter la lecture</string>
+    <string name="quran_player_open">Ouvrir le lecteur</string>
+
     <!-- Widget de l'écran d'accueil -->
     <string name="widget_label">Miqaat — Prochaine prière</string>
     <string name="widget_description">La prochaine prière, le temps restant et les horaires du jour sur votre écran d\'accueil</string>

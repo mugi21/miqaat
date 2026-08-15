@@ -26,6 +26,8 @@ Package racine : `com.mohamed.miqaat` (`app/src/main/java/com/mohamed/miqaat/`).
 | `CountdownFormatter.kt` | `formatCountdown(Duration)`. |
 | `AutoMethodResolver.kt` | Code pays ISO → méthode de calcul ; `CalculationSettings.effectiveMethod()`. |
 | **`QiblaCalculator.kt`** | Azimut de la Qibla (grand cercle) et distance à la Kaaba (haversine) + utilitaires d'angles (`normalizeDegrees`, `shortestAngleDelta`, `isAlignedWithQibla`, `lerpDegrees`). |
+| **`QuranAudio.kt`** | L'URL d'un enregistrement mp3quran (`server` + `%03d.mp3`) et la file de lecture d'un moshaf. Seul point de l'app qui construit une URL audio. |
+| **`QuranSuggestion.kt`** | La sourate du moment : cinq règles bornées par les **horaires réels du jour**. Voir [quran.md](quran.md). |
 | `model/PrayerName.kt`, `model/DailyPrayerTimes.kt` | Les six moments du jour. |
 | `model/MethodOption.kt` | Les 21 méthodes de calcul (11 d'Adhan + 10 nationales reconstruites), chacune avec sa `TimeCalibration`. |
 | **`model/TimeCalibration.kt`** | Décalage en secondes par moment + arrondi à la minute (`MinuteRounding`) : comment une méthode colle à son calendrier officiel. Voir D40 et [prayer-times-accuracy.md](prayer-times-accuracy.md). |
@@ -35,6 +37,8 @@ Package racine : `com.mohamed.miqaat` (`app/src/main/java/com/mohamed/miqaat/`).
 | **`model/NotificationMode.kt`** | Suivre le téléphone, toujours sonner, toujours vibrer, toujours silencieux. |
 | **`model/NotificationSettings.kt`** | Réglages de **rendu** des alertes, tenus à part de la planification. |
 | **`model/Invocation.kt`** | Une invocation (livrée ou écrite) et son moment (`InvocationSchedule` : heure fixe ou ancrage à une prière). Voir D26. |
+| **`model/Reciter.kt`** | Un récitateur et ses `Moshaf` (rīwāya, serveur, sourates réellement disponibles). Porte le découpage tolérant de `surah_list`. |
+| **`model/Surah.kt`** | Une sourate : numéro, nom traduit par l'API, mecquoise ou médinoise. |
 
 ## `data/` — sources de données
 
@@ -46,11 +50,14 @@ Package racine : `com.mohamed.miqaat` (`app/src/main/java/com/mohamed/miqaat/`).
 | `location/CityNameResolver.kt` | `Geocoder` → `ResolvedPlace(cityName, countryCode)`, best-effort. |
 | `settings/SettingsRepository.kt` | DataStore Preferences : instantané mémoire pour les lecteurs synchrones + `Flow` pour l'UI. |
 | **`settings/AppLocale.kt`** | `AppLanguage` + langue choisie dans l'app : stockage `SharedPreferences` (lecture synchrone) et `wrap(context)` pour habiller un contexte. Voir [i18n.md](i18n.md). |
-| `db/` | Room : `MiqaatDatabase` (v3), `CachedLocationEntity` (singleton id=1), `LocationDao`, **`InvocationEntity` + `InvocationDao`**. |
+| `db/` | Room : `MiqaatDatabase` (v4), `CachedLocationEntity` (singleton id=1), `LocationDao`, **`InvocationEntity` + `InvocationDao`**, **`QuranEntities` + `QuranDao` + `QuranFavoriteDao`**. |
 | **`invocations/InvocationRepository.kt`** | Les invocations : instantané mémoire + `Flow`, semis idempotent des deux entrées livrées (ids fixes). Voir [invocations.md](invocations.md). |
 | **`reliability/ReliabilityLog.kt`** | `SharedPreferences` : dernière alerte réellement délivrée, report de la bannière, étape OEM acquittée. Seul moyen de détecter le gel de l'app par une surcouche. |
 | **`reliability/ReliabilityInspector.kt`** | Interroge les cinq verrous (notifications, alarmes exactes, batterie, démarrage auto, délivrance) et ouvre l'écran système qui corrige chacun. |
 | **`reliability/OemAutostart.kt`** | Table `Build.MANUFACTURER` → écrans de démarrage automatique des surcouches. ⚠ Exige le bloc `<queries>` du manifeste. |
+| **`quran/Mp3QuranApi.kt`** | Les deux appels à l'API v3 (`HttpURLConnection` + `org.json`, aucune pile réseau), la table des codes de langue (⚠ anglais = `eng`) et le parseur JSON → domaine, **pur donc testable**. |
+| **`quran/QuranCatalogRepository.kt`** | Le catalogue : `Flow` depuis Room, rechargement si vide / périmé (7 jours) / autre langue, et les favoris. Voir [quran.md](quran.md). |
+| **`quran/QuranPreferences.kt`** | Second DataStore (`quran`), tenu à part de `settings` : la position de lecture s'écrit à chaque pause et ne doit pas faire réémettre les réglages de prière. |
 | **`compass/CompassDataSource.kt`** | Capteurs → `Flow<CompassReading>` : choix du capteur et replis, permutation des axes selon la rotation de l'écran, déclinaison magnétique (`GeomagneticField`, hors ligne), lissage circulaire. |
 
 ## `notifications/`
@@ -66,6 +73,14 @@ Package racine : `com.mohamed.miqaat` (`app/src/main/java/com/mohamed/miqaat/`).
 | `PrayerAlarmScheduler.kt` | Une alarme exacte à la fois (`setExactAndAllowWhileIdle`, replis `setAlarmClock` puis inexact), posée sur le prochain **évènement** ; `nextEvent()` l'expose sans rien programmer ; pose aussi le chien de garde (D33). |
 | `PrayerAlarmReceiver.kt` | Vérifie la fraîcheur (D31), pose la notification, décide de l'alerte (D36), vibre, lance le son, puis planifie l'évènement suivant dans un `finally`. ⚠ **Ne pas renommer** : les alarmes déjà posées pointent sur ce nom de classe. |
 | `RescheduleReceiver.kt` | `BOOT_COMPLETED`, `TIME_SET`, `TIMEZONE_CHANGED`, `MY_PACKAGE_REPLACED`, changement de permission d'alarme exacte, et le chien de garde. `exported="true"` — voir D32. |
+
+## `quran/` — lecture du Coran (ni interface, ni donnée)
+
+| Fichier | Rôle |
+|---|---|
+| **`QuranPlaybackService.kt`** | `MediaSessionService` Media3 : `ExoPlayer` avec focus audio délégué, notification et écran verrouillé, sauvegarde de la position. Porte `pauseForPrayer()`, le côté muet de D43. ⚠ `exported="true"` **exigé** par `MediaSessionService`. |
+| **`QuranPlayerConnection.kt`** | Le `MediaController` et le `StateFlow<QuranPlaybackUiState>` : seul point de contact de l'interface avec la lecture. Un exemplaire pour toute l'app (porté par `MiqaatApp`). |
+| **`QuranMediaItems.kt`** | La file de lecture en objets Media3 ; le `mediaId` porte le numéro de sourate. |
 
 ## `widget/` — widget d'écran d'accueil
 
@@ -99,6 +114,12 @@ Package racine : `com.mohamed.miqaat` (`app/src/main/java/com/mohamed/miqaat/`).
 | **`invocations/InvocationDetail.kt`** | Lecture d'une invocation : interligne large pour les diacritiques. |
 | **`invocations/InvocationEditor.kt`** | Dialogue de création/modification : titre, texte, heure fixe (`TimePicker` M3) ou ancrage à une prière. |
 | **`invocations/InvocationsViewModel.kt`**, **`invocations/InvocationsUiState.kt`** | Liste + invocation lue + brouillon d'édition, tout dans le ViewModel (donc D7 tient toujours). Chaque écriture replanifie l'alarme. |
+| **`quran/QuranScreen.kt`** | Écoute du Coran : récitateurs, puis sourates du récitateur ouvert, lecteur en tête. Une seule `LazyColumn` pour les 114 lignes et l'en-tête. |
+| **`quran/ReciterList.kt`**, **`quran/SurahList.kt`** | Les deux listes, écrites en `LazyListScope` pour partager la même zone défilante. Étoile de favori partagée. |
+| **`quran/SuggestionCard.kt`** | La carte « sourate du moment » — teinte `tertiary`, comme le Ramadan du calendrier. |
+| **`quran/QuranPlayerCard.kt`** | Le lecteur complet : barre de progression, ±10 s, précédent/lecture/suivant. |
+| **`quran/QuranPlayerBar.kt`** | Le **mini-lecteur**, posé en `bottomBar` de `MainActivity` : il survit au changement d'écran. Ne compose rien quand rien ne joue. |
+| **`quran/QuranViewModel.kt`**, **`quran/QuranUiState.kt`**, **`quran/QuranLabels.kt`** | Catalogue, favoris, suggestion et état de lecture ; favoris épinglés en tête de liste. |
 
 ## Ressources
 
@@ -146,5 +167,7 @@ fiabilité**. Tous en JVM pur, aucun émulateur nécessaire.
 | Changer le comportement sonore ou vibratoire | `domain/NotificationAlert.kt` (la matrice) + `AlertVibrator` (les motifs) + `AlertSoundService` (les flux) — voir [notifications.md](notifications.md) |
 | Ajouter un fabricant à la liste du démarrage automatique | `data/reliability/OemAutostart.kt` **et** le bloc `<queries>` du manifeste — l'oubli le plus probable |
 | Changer une tolérance de retard | `domain/AlarmFreshness.kt` ; celle du rappel doit rester **sous** `LEAD_CHOICES.min()` |
+| Ajouter une règle de « sourate du moment » | `domain/QuranSuggestion.kt` + `ui/quran/QuranLabels.kt` + les **trois** `strings.xml` + un test — voir [quran.md](quran.md) |
+| Toucher au catalogue du Coran ou à sa péremption | `data/quran/QuranCatalogRepository.kt` ; ⚠ le code de langue de l'anglais est `eng` |
 | Ajouter un texte | les **trois** `strings.xml` |
 | Ajouter une surface hors activité (widget, notification…) | l'entourer de `AppLocale.wrap()`, sinon elle ignore la langue choisie dans l'app |

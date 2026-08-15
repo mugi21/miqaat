@@ -170,6 +170,44 @@
     <string name="home_reliability_warning">Prayer notifications may not arrive</string>
     <string name="action_later">Later</string>
 
+    <!-- Quran listening -->
+    <string name="quran_open">Listen to the Quran</string>
+    <string name="quran_title">Listen to the Quran</string>
+    <string name="quran_choose_reciter">Choose a reciter</string>
+    <string name="quran_choose_surah">Choose a surah</string>
+    <string name="quran_search_reciter">Search for a reciter</string>
+    <string name="quran_favorites">Favourites</string>
+    <string name="quran_all_reciters">All reciters</string>
+    <string name="quran_favorite_add">Add to favourites</string>
+    <string name="quran_favorite_remove">Remove from favourites</string>
+    <string name="quran_no_result">No results</string>
+    <string name="quran_surah_makki">Meccan</string>
+    <string name="quran_surah_madani">Medinan</string>
+    <string name="quran_surah_unavailable">Not available from this reciter</string>
+    <string name="quran_loading">Loading the catalogue…</string>
+    <string name="quran_buffering">Loading…</string>
+    <string name="quran_retry">Try again</string>
+    <string name="quran_offline_title">Could not load the list of reciters</string>
+    <string name="quran_offline_message">The catalogue needs an Internet connection once, then it stays saved on the device.</string>
+    <string name="quran_error_playback">Playback failed. Check your Internet connection.</string>
+    <string name="quran_streaming_hint">The recitation is streamed from the Internet and is not saved on the device. Browsing the list works offline.</string>
+    <!-- Surah for this moment: suggested from today's actual prayer times. -->
+    <string name="quran_suggestion_title">Surah for this moment</string>
+    <string name="quran_reason_friday">A sunnah of Friday</string>
+    <string name="quran_reason_before_sleep">Read before sleeping</string>
+    <string name="quran_reason_morning">To begin the day</string>
+    <string name="quran_reason_evening">Between Maghrib and Isha</string>
+    <string name="quran_reason_anytime">A suggestion for now</string>
+    <!-- Player -->
+    <string name="quran_player_play">Play</string>
+    <string name="quran_player_pause">Pause</string>
+    <string name="quran_player_next">Next surah</string>
+    <string name="quran_player_previous">Previous surah</string>
+    <string name="quran_player_forward">Forward 10 seconds</string>
+    <string name="quran_player_rewind">Back 10 seconds</string>
+    <string name="quran_player_stop">Stop playback</string>
+    <string name="quran_player_open">Open the player</string>
+
     <!-- Home screen widget -->
     <string name="widget_label">Miqaat — Next prayer</string>
     <string name="widget_description">The next prayer, the time remaining and today\'s times on your home screen</string>

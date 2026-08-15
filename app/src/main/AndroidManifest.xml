@@ -28,6 +28,16 @@
     <!-- Position approximative : suffisante pour les horaires (précision « ville »),
          un seul fix ponctuel, jamais en arrière-plan -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <!-- Écoute du Coran (D41) : la SEULE fonctionnalité en réseau de l'application.
+         Aucune fonction cœur — horaires, alarmes, Qibla, calendrier, adhkār, widget —
+         n'y touche, et l'app reste entièrement utilisable hors ligne sans elle.
+         Un seul hôte contacté (mp3quran.net et ses serveurs de fichiers), aucune
+         donnée envoyée, aucun identifiant, toujours aucun SDK tiers. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- La lecture continue app fermée : contrairement à l'adhan (shortService,
+         quelques dizaines de secondes), une récitation dure une heure. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
 
     <!-- Boussole Qibla : le magnétomètre est confortable mais non obligatoire
          (sans lui, l'écran affiche quand même l'angle de la Qibla). -->
@@ -89,6 +99,19 @@
             android:name=".notifications.AlertSoundService"
             android:exported="false"
             android:foregroundServiceType="shortService" />
+
+        <!-- Lecture du Coran. exported="true" n'est pas une inattention : c'est
+             MediaSessionService qui l'exige — les contrôles système, l'écran
+             verrouillé, l'Assistant et Android Auto se lient à la session. Le
+             service ne fait rien d'autre que jouer une URL de mp3quran.net. -->
+        <service
+            android:name=".quran.QuranPlaybackService"
+            android:exported="true"
+            android:foregroundServiceType="mediaPlayback">
+            <intent-filter>
+                <action android:name="androidx.media3.session.MediaSessionService" />
+            </intent-filter>
+        </service>
 
         <!-- Widget d'écran d'accueil. exported="false" suffit : le système est
              exempté et adresse ses diffusions au composant explicitement. -->

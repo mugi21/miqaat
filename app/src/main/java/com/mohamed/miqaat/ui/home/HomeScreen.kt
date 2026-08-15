@@ -41,6 +41,7 @@ fun HomeScreen(
     onOpenQibla: () -> Unit,
     onOpenCalendar: () -> Unit,
     onOpenInvocations: () -> Unit,
+    onOpenQuran: () -> Unit,
     onOpenReliability: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = homeViewModel(),
@@ -52,6 +53,7 @@ fun HomeScreen(
         onOpenQibla = onOpenQibla,
         onOpenCalendar = onOpenCalendar,
         onOpenInvocations = onOpenInvocations,
+        onOpenQuran = onOpenQuran,
         onOpenReliability = onOpenReliability,
         modifier = modifier,
     )
@@ -75,6 +77,7 @@ private fun HomeContent(
     onOpenQibla: () -> Unit,
     onOpenCalendar: () -> Unit,
     onOpenInvocations: () -> Unit,
+    onOpenQuran: () -> Unit = {},
     onOpenReliability: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
@@ -152,6 +155,13 @@ private fun HomeContent(
                 Icon(
                     painter = painterResource(R.drawable.ic_invocation),
                     contentDescription = stringResource(R.string.invocation_open),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            IconButton(onClick = onOpenQuran) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_quran),
+                    contentDescription = stringResource(R.string.quran_open),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }

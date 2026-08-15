@@ -18,6 +18,7 @@ Application Android native de temps de prière (Salat) :
 | **Jetpack Compose + Material 3** | UI déclarative moderne, standard actuel d'Android ; excellent support RTL natif |
 | **Adhan** (`com.batoulapps.adhan:adhan2`, batoulapps/adhan-kotlin) | Calcul astronomique des temps de prière 100 % local, aucun appel réseau, librairie de référence maintenue |
 | **AlarmManager seul** (alarmes exactes) | `setExactAndAllowWhileIdle` pour la ponctualité même en Doze ; la chaîne se replanifie elle-même, et une seconde alarme inexacte sert de chien de garde. **Pas de WorkManager** : travail déférable, donc incapable de garantir la ponctualité — voir D33 |
+| **Media3 / ExoPlayer** (écoute du Coran seulement) | Seule dépendance lourde acceptée, et seule fonctionnalité en réseau : buffering d'un flux instable, focus audio, notification média et écran verrouillé. Voir D41 et D42 |
 | **Room** | Stockage local : paramètres, cache des coordonnées, futur tracker de prières |
 | **MVVM + ViewModel + StateFlow** | Architecture standard Android, testable, survit aux rotations |
 | `minSdk 26` | java.time et `HijrahDate` disponibles nativement ; couvre ~95 % du parc |
@@ -38,6 +39,7 @@ ui/              Compose + ViewModels (MVVM, StateFlow)
   theme/         Thème Material 3
   home/          HomeScreen, HomeViewModel, HomeUiState
 notifications/   Alarmes exactes, receivers, canaux, service sonore
+quran/           Lecture du Coran (MediaSessionService Media3, contrôleur)
 widget/          Widget d'écran d'accueil (RemoteViews)
 ```
 
@@ -52,8 +54,8 @@ widget/          Widget d'écran d'accueil (RemoteViews)
 ### v1.1
 ✅ Réglages (méthode de calcul, madhab, ajustement Hijri) · ✅ méthodes nationales + sélection automatique selon le pays · ✅ boussole Qibla · ✅ widget écran d'accueil · ✅ rappels avant la prière · ✅ vue calendrier mensuel + horaires Ramadan · ✅ invocations et adhkār (livrées + créées par l'utilisateur, rappel configurable) · ⬜ sélection manuelle de ville
 
-### v1.2+
-Thème sombre/clair · tracker de prières · événements du calendrier islamique · horaires de jeûne Ramadan
+### v1.2
+✅ écoute du Coran (mp3quran, récitateurs + favoris, pause automatique à l'adhan, sourate du moment) · ⬜ tracker de prières · ⬜ événements du calendrier islamique
 
 ### Plus tard
 Multilingue (FR/AR/EN) · sons d'adhan personnalisés · statistiques
@@ -61,6 +63,7 @@ Multilingue (FR/AR/EN) · sons d'adhan personnalisés · statistiques
 ## Contraintes techniques permanentes
 
 - Permissions : `SCHEDULE_EXACT_ALARM` / `USE_EXACT_ALARM`, `POST_NOTIFICATIONS` (Android 13+), localisation — à demander proprement avec explications
+- `INTERNET` depuis la session 14, pour la **seule** écoute du Coran : aucune fonction cœur n'y touche, aucun SDK de tracking, un seul hôte contacté (voir D41)
 - `BOOT_COMPLETED` → replanifier toutes les alarmes après reboot
 - Doze mode : utiliser `setExactAndAllowWhileIdle` / `setAlarmClock` ; les notifications ne doivent JAMAIS être en retard
 - Aucune dépendance réseau pour les fonctionnalités cœur ; aucun SDK tiers de tracking
@@ -73,11 +76,12 @@ et leurs raisons), `file-map.md` (carte des fichiers), `i18n.md` (multilingue),
 `notifications.md` (chaîne, canaux, mode d'alerte), `reliability.md` (pourquoi
 l'adhan n'arrive pas et comment le réparer), `prayer-times-accuracy.md` (coller à un
 calendrier officiel : arrondi, marge de précaution, protocole de mesure).
+`quran.md` (l'API mp3quran et ses pièges, le cache, le lecteur, la sourate du moment).
 `CLAUDE.md` reste la mémoire vivante : vision, stack, roadmap, État actuel.
 
 ## État actuel
 
-**Dernière mise à jour : 2026-08-15 (fin de session 13)**
+**Dernière mise à jour : 2026-08-15 (fin de session 14)**
 
 ### Fait (session 1)
 - Squelette Android Studio (AGP 9.2.1, Kotlin 2.2.10, Compose BOM 2026.02.01, minSdk 26, targetSdk 36)
@@ -290,7 +294,31 @@ Retour d'appareil : écarts d'une à deux minutes contre le calendrier officiel 
 - **Rien ne change pour les autres méthodes** : la calibration par défaut reproduit exactement le comportement d'Adhan, et un test le verrouille. **Aucun texte d'interface nouveau**, donc rien à traduire — la correction est entièrement interne
 - **120 tests JVM verts** (12 nouveaux : 7 sur l'arrondi et l'ordre décalage/arrondi, 5 sur le calendrier officiel — jamais en avance, jamais plus d'une minute après, Fajr/Ẓuhr/Maghrib exacts les 30 jours, nombre de lignes justes figé pour l'ʿAṣr et l'ʿIshāʾ, place du shurūq) ; `assembleDebug` OK. **Pas de vérification sur appareil** (non demandée cette session)
 
+### Fait (session 14) — écoute du Coran
+Première fonctionnalité en réseau de l'app. L'idée n'était pas d'ajouter une n-ième application de récitation, mais d'exploiter ce que Miqaat est seule à savoir pendant qu'elle joue : **les horaires de prière et la date hégirienne**.
+
+- **Source** : API publique **mp3quran.net v3**, sans clé ni inscription. Deux appels seulement (`/reciters`, `/suwar`), `HttpURLConnection` + `org.json` — **pas** de Retrofit ni d'OkHttp. Le parseur JSON → domaine est une fonction **pure prenant une `String`**, donc testable sur fixtures ; `org.json` est ajouté en `testImplementation` seulement (le framework Android lève « not mocked » en test JVM)
+- **Trois pièges de l'API relevés à la mesure**, tous verrouillés par un test : ① les codes de langue ne sont pas ceux d'Android — l'arabe est `ar`, le français `fr`, mais **l'anglais est `eng`**, et envoyer `en` ne renvoie pas d'erreur, l'API retombe silencieusement sur l'arabe ; ② `surah_list` porte parfois une **virgule traînante** (la documentation officielle en montre un exemple) ; ③ **un moshaf n'a pas toujours les 114 sourates** (celui de Hazza Al-Balushi en compte 83) — les manquantes s'affichent atténuées et non cliquables plutôt que masquées
+- ⚠ Les pages de documentation répondent **403** sans User-Agent de navigateur, et `/api/v3/docs` est un **404** : la vraie doc est sur `https://www.mp3quran.net/ar/api`. Les endpoints JSON, eux, répondent à n'importe quel client. La page `/ar/api/2` documente l'API « verset par verset », un service différent — pas une version de repli
+- **D41 — `INTERNET` entre dans l'app, et l'offline-first se précise plutôt qu'il ne tombe** : aucune fonction **cœur** (horaires, alarmes, Qibla, calendrier, adhkār, widget) ne touche au réseau, et l'app reste entièrement utilisable sans jamais ouvrir l'écran du Coran. Toujours aucun SDK de tracking, un seul hôte contacté, aucune donnée envoyée. La baseline `app_tagline` (« دون إنترنت ») **reste vraie** : elle parle des horaires
+- **D42 — Media3/ExoPlayer, en rupture assumée** avec la tradition zéro-dépendance (Glance D14, WorkManager D33, AppCompat, `core-splashscreen`, navigation D7). Il apporte quatre choses qu'on ne réécrit pas correctement à la main sur un flux HTTP distant : buffering et reprise après coupure, focus audio, notification média + écran verrouillé, file d'attente. Coût ~2,5 Mo. `media3-exoplayer` + `media3-session` **seulement** (pas `media3-ui`, en Views). ⚠ `QuranPlaybackService` est `exported="true"` : `MediaSessionService` l'**exige**, ce n'est pas une inattention à corriger
+- **D43 — le lecteur cède la place à l'adhan, par deux chemins et non un seul.** Quand l'alerte a du son : **rien à écrire**, `AlertSoundService` demande déjà `AUDIOFOCUS_GAIN_TRANSIENT` (D20) et ExoPlayer construit avec `handleAudioFocus = true` se met en pause **puis reprend seul** — exactement le comportement mesuré à la milliseconde en session 10 avec un lecteur tiers, sauf que le lecteur est maintenant le nôtre. Quand l'alerte est **muette** (vibreur/silencieux : depuis D38 aucun service sonore n'est démarré, donc personne ne prend le focus), `PrayerAlarmReceiver` appelle explicitement `QuranPlaybackService.pauseForPrayer()`. La règle qui évite le double comportement : `if (decision.stream == null)`. Une **invocation ne met rien en pause** — quelques secondes de dhikr atténuent (`..._MAY_DUCK`, D39), interrompre serait disproportionné
+- ⚠ La chaîne d'alarmes **n'apprend pas** l'existence du lecteur : ni `PrayerAlarmScheduler`, ni `AlarmEventResolver`, ni `AlertSoundService` ne sont touchés. Le receiver seul fait le lien, et **après** avoir posé la notification — la ponctualité de l'adhan ne dépend en rien du Coran
+- **La sourate du moment** (`domain/QuranSuggestion.kt`, JVM pur) : al-Kahf le vendredi **du Fajr au Maghrib**, al-Mulk après l'Isha, Yā-Sīn entre Fajr et shurūq, al-Wāqiʿa entre Maghrib et Isha, ar-Raḥmān sinon. Les bornes sont les **horaires réels du jour**, jamais des heures d'horloge — c'est ce qui rend la première règle juste : la nuit du vendredi commence au Maghrib du jeudi, donc jeudi soir c'est al-Mulk qui gagne et al-Kahf ne prend le relais qu'au Fajr. Un test décale le Maghrib d'une heure et vérifie que la même heure d'horloge change de réponse
+- **Room v3 → v4** : `quran_reciter`, `quran_moshaf`, `quran_surah`, `quran_favorite`. ⚠ Le piège de la session 9 (le `CREATE TABLE` mot pour mot) a été **écarté sans émulateur** : après un `compileDebugKotlin`, le `MiqaatDatabase_Impl.kt` généré par KSP contient le SQL exact, comparé caractère par caractère à celui de la migration — identique. Une clé primaire non auto-générée s'écrit `INTEGER NOT NULL … PRIMARY KEY(id)`, pas `INTEGER PRIMARY KEY`
+- **Cache** : le catalogue n'existe que dans **une langue à la fois** (les noms ne sont que des translittérations), rechargé si vide, périmé (> 7 jours) ou d'une autre langue. Parcourir marche hors ligne dès le premier chargement ; **écouter demande le réseau**, et l'écran le dit. Un échec ne bloque que si l'on n'a rien à montrer. Les **favoris** ne sont pas du cache — c'est pour eux qu'une migration a été écrite plutôt que de laisser Room repartir de zéro
+- **Second DataStore** (`quran`) et non une extension de `settings` : la position de lecture s'écrit à chaque pause, la mêler aux réglages ferait réémettre tous leurs `Flow` — donc **replanifier l'alarme** — à chaque mise en pause de la récitation
+- **UI** : `ui/quran/` — récitateurs (recherche, favoris épinglés en tête, ~130 entrées), sourates du récitateur ouvert, carte de suggestion, lecteur complet (progression, ±10 s, précédent/suivant). Une seule `LazyColumn` partagée par l'en-tête et les listes (écrites en `LazyListScope`), tout l'état dans le ViewModel → **D7 tient toujours**, comme D21 et les adhkār. 7ᵉ entrée à `enum Screen`, 4ᵉ icône sur l'accueil (`ic_quran.xml`)
+- **Le mini-lecteur en `bottomBar` de `MainActivity`** et non dans un écran : il survit au changement d'écran, donc on écoute une sourate en consultant les horaires. Invisible quand rien ne joue (ne compose rien, aucun blanc — patron de `ReliabilityBanner`). ⚠ Effet de bord corrigé au passage : la barre porte déjà `navigationBarsPadding`, donc `MainActivity` applique `consumeWindowInsets(innerPadding)` en plus de `padding(innerPadding)` — sans quoi chaque écran rajoutait la marge par-dessus et un blanc de la hauteur de la barre de navigation apparaissait dès qu'une sourate jouait. Même famille que D30
+- ⚠ Le service est habillé par `AppLocale.wrap()` dans `attachBaseContext`, comme toute surface hors activité ; `onTaskRemoved` l'arrête si rien ne joue, sinon une notification fantôme survit à la fermeture
+- **35 clés `quran_*`** dans les trois `strings.xml`. Les **noms des 114 sourates ne s'y trouvent pas** : ils viennent de l'API déjà traduits
+- **151 tests JVM verts** (31 nouveaux : les cinq règles de suggestion et leur priorité, la bascule jeudi soir → vendredi matin, la preuve que les bornes suivent les horaires et non l'horloge, la construction de l'URL et de la file, le parsing sur fixtures officielles dont la virgule traînante et le JSON tronqué, et le verrou `ENGLISH → "eng"`) ; `assembleDebug` OK — **Media3 compile sur AGP 9**, validé dès la première étape avant d'écrire le reste
+- **Aucune vérification sur appareil** cette session (non demandée) : voir « Prochaine étape »
+
 ### Prochaine étape
+- **Éprouver l'écoute du Coran sur appareil** : ① le catalogue se charge, un récitateur mis en favori remonte en tête ; ② une sourate se lance, les contrôles marchent depuis la notification **et** l'écran verrouillé ; ③ mode avion → message clair et liste toujours consultable (cache) ; ④ **D43 cas sonore** : lancer une sourate, déclencher la notification de test en mode sonnerie → pause, adhan, **reprise seule** ; ⑤ **D43 cas muet** : téléphone en vibreur, même test → pause **sans** reprise, mini-lecteur toujours visible ; ⑥ quitter l'app en lecture → la notification survit ; en pause → elle disparaît ; ⑦ le tout en arabe RTL **et** en français LTR, en clair **et** en sombre
+- **Vérifier que la 4ᵉ icône de l'accueil passe** sur un écran de 360 dp à l'échelle de police 1,8 ; si c'est trop serré, l'entrée Coran passe au mini-lecteur et à une ligne dans les réglages
+- **Vérifier la migration Room 3→4** sur un appareil qui porte déjà des données (position, invocations) : `user_version = 4` et rien de perdu
 - **Vérifier la correction à l'écran** : à Skikda, méthode auto → Algérie, les horaires affichés doivent être ceux du calendrier papier ; contrôler que l'alarme système suit (`dumpsys alarm`), le widget et le calendrier mensuel aussi
 - **Obtenir un calendrier officiel d'un mois d'hiver** pour Skikda : c'est la seule façon de savoir si la calibration tient sur deux saisons ou si elle est ajustée sur un mois d'été (voir `docs/prayer-times-accuracy.md`, « Ce qui reste ouvert »)
 - **Vérifier sur le Redmi Note 8** (voir `docs/reliability.md`) : ① installer sans rien régler, laisser une nuit → rien n'arrive et `DELIVERY = à corriger` + bannière ; ② suivre les actions de l'écran (autostart, batterie sans restriction) ; ③ nouvelle nuit → les cinq adhans arrivent ; ④ **non-régression du symptôme** : après une nuit sans réglage MIUI, ouvrir l'app à 14h ne doit produire **aucune** notification « approche du Fajr » ; ⑤ `dumpsys package … | grep stopped`

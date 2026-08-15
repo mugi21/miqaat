@@ -18,6 +18,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
@@ -31,6 +32,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import com.mohamed.miqaat.data.settings.AppLocale
 import com.mohamed.miqaat.notifications.PrayerAlarmScheduler
@@ -38,6 +40,8 @@ import com.mohamed.miqaat.ui.calendar.CalendarScreen
 import com.mohamed.miqaat.ui.home.HomeScreen
 import com.mohamed.miqaat.ui.invocations.InvocationsScreen
 import com.mohamed.miqaat.ui.qibla.QiblaScreen
+import com.mohamed.miqaat.ui.quran.QuranPlayerBar
+import com.mohamed.miqaat.ui.quran.QuranScreen
 import com.mohamed.miqaat.ui.reliability.ReliabilityScreen
 import com.mohamed.miqaat.ui.settings.SettingsScreen
 import com.mohamed.miqaat.ui.splash.SplashScreen
@@ -46,7 +50,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /** Les écrans de premier niveau ; enum = Serializable, donc rememberSaveable le garde. */
-private enum class Screen { HOME, SETTINGS, QIBLA, CALENDAR, INVOCATIONS, RELIABILITY }
+private enum class Screen { HOME, SETTINGS, QIBLA, CALENDAR, INVOCATIONS, RELIABILITY, QURAN }
 
 class MainActivity : ComponentActivity() {
 
@@ -56,6 +60,9 @@ class MainActivity : ComponentActivity() {
      * [onNewIntent] qui apporte la demande.
      */
     private val openInvocationId = mutableLongStateOf(NO_INVOCATION)
+
+    /** Posé par la notification du lecteur : rouvrir l'app sur l'écran du Coran. */
+    private val openQuran = mutableStateOf(false)
 
     private val permissionsLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { grants ->
@@ -74,6 +81,7 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         openInvocationId.longValue = intent.requestedInvocationId()
+        openQuran.value = intent.requestedQuran()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -81,6 +89,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         openInvocationId.longValue = intent.requestedInvocationId()
+        openQuran.value = intent.requestedQuran()
         requestMissingPermissions()
         // Chaque ouverture resynchronise la chaîne d'alarmes (filet de sécurité),
         // puis rafraîchit la position si on y a droit.
@@ -116,26 +125,58 @@ class MainActivity : ComponentActivity() {
                 Box(Modifier.fillMaxSize()) {
                     // Insets à zéro : l'écran gère lui-même les barres système
                     // (le héros peint son dégradé derrière la barre de statut).
+                    // Le mini-lecteur vit dans la barre du bas et non dans un
+                    // écran : c'est ce qui lui permet de survivre au retour à
+                    // l'accueil, donc d'écouter une sourate en consultant les
+                    // horaires. Il ne compose rien quand rien ne joue.
+                    val playback by miqaatApp.quranPlayer.state.collectAsStateWithLifecycle()
+
+                    // Des écrans à plat depuis l'accueil : un état suffit, pas
+                    // besoin de librairie de navigation pour l'instant. Déclaré
+                    // **au-dessus** du Scaffold : la barre du bas doit pouvoir
+                    // ouvrir l'écran du Coran, elle aussi.
+                    var screen by rememberSaveable { mutableStateOf(Screen.HOME) }
+                    val requestedInvocation by openInvocationId
+                    val requestedQuran by openQuran
+
+                    // Arrivée depuis la notification d'une invocation : on ouvre
+                    // l'écran directement sur elle, prête à être lue.
+                    LaunchedEffect(requestedInvocation) {
+                        if (requestedInvocation != NO_INVOCATION) screen = Screen.INVOCATIONS
+                    }
+                    // Arrivée depuis la notification du lecteur.
+                    LaunchedEffect(requestedQuran) {
+                        if (requestedQuran) screen = Screen.QURAN
+                    }
+
+                    val backToHome = {
+                        openInvocationId.longValue = NO_INVOCATION
+                        openQuran.value = false
+                        screen = Screen.HOME
+                    }
+
                     Scaffold(
                         modifier = Modifier.fillMaxSize(),
                         containerColor = MaterialTheme.colorScheme.background,
                         contentWindowInsets = WindowInsets(0),
+                        bottomBar = {
+                            QuranPlayerBar(
+                                state = playback,
+                                onOpen = { screen = Screen.QURAN },
+                                onTogglePlayPause = miqaatApp.quranPlayer::togglePlayPause,
+                                onStop = miqaatApp.quranPlayer::stop,
+                            )
+                        },
                     ) { innerPadding ->
-                        // Des écrans à plat depuis l'accueil : un état suffit,
-                        // pas besoin de librairie de navigation pour l'instant.
-                        var screen by rememberSaveable { mutableStateOf(Screen.HOME) }
-                        val requestedInvocation by openInvocationId
+                        // `consumeWindowInsets` en plus du `padding` : la barre
+                        // du bas porte déjà `navigationBarsPadding`, et sans
+                        // cette consommation les écrans la rajouteraient
+                        // par-dessus — un blanc de la hauteur de la barre de
+                        // navigation apparaîtrait dès qu'une sourate joue.
+                        val screenModifier = Modifier
+                            .padding(innerPadding)
+                            .consumeWindowInsets(innerPadding)
 
-                        // Arrivée depuis la notification d'une invocation : on ouvre
-                        // l'écran directement sur elle, prête à être lue.
-                        LaunchedEffect(requestedInvocation) {
-                            if (requestedInvocation != NO_INVOCATION) screen = Screen.INVOCATIONS
-                        }
-
-                        val backToHome = {
-                            openInvocationId.longValue = NO_INVOCATION
-                            screen = Screen.HOME
-                        }
                         if (screen != Screen.HOME) {
                             BackHandler(onBack = backToHome)
                         }
@@ -145,35 +186,41 @@ class MainActivity : ComponentActivity() {
                                 onOpenQibla = { screen = Screen.QIBLA },
                                 onOpenCalendar = { screen = Screen.CALENDAR },
                                 onOpenInvocations = { screen = Screen.INVOCATIONS },
+                                onOpenQuran = { screen = Screen.QURAN },
                                 onOpenReliability = { screen = Screen.RELIABILITY },
-                                modifier = Modifier.padding(innerPadding),
+                                modifier = screenModifier,
                             )
 
                             Screen.SETTINGS -> SettingsScreen(
                                 onBack = { screen = Screen.HOME },
                                 onOpenReliability = { screen = Screen.RELIABILITY },
-                                modifier = Modifier.padding(innerPadding),
+                                modifier = screenModifier,
                             )
 
                             Screen.RELIABILITY -> ReliabilityScreen(
                                 onBack = { screen = Screen.HOME },
-                                modifier = Modifier.padding(innerPadding),
+                                modifier = screenModifier,
                             )
 
                             Screen.QIBLA -> QiblaScreen(
                                 onBack = { screen = Screen.HOME },
-                                modifier = Modifier.padding(innerPadding),
+                                modifier = screenModifier,
                             )
 
                             Screen.CALENDAR -> CalendarScreen(
                                 onBack = { screen = Screen.HOME },
-                                modifier = Modifier.padding(innerPadding),
+                                modifier = screenModifier,
                             )
 
                             Screen.INVOCATIONS -> InvocationsScreen(
                                 openInvocationId = requestedInvocation.takeIf { it != NO_INVOCATION },
                                 onBack = backToHome,
-                                modifier = Modifier.padding(innerPadding),
+                                modifier = screenModifier,
+                            )
+
+                            Screen.QURAN -> QuranScreen(
+                                onBack = backToHome,
+                                modifier = screenModifier,
                             )
                         }
                     }
@@ -224,9 +271,14 @@ class MainActivity : ComponentActivity() {
     private fun Intent.requestedInvocationId(): Long =
         getLongExtra(EXTRA_OPEN_INVOCATION, NO_INVOCATION)
 
+    private fun Intent.requestedQuran(): Boolean = getBooleanExtra(EXTRA_OPEN_QURAN, false)
+
     companion object {
         /** Posé par la notification d'une invocation : son identifiant. */
         const val EXTRA_OPEN_INVOCATION = "open_invocation"
+
+        /** Posé par la notification du lecteur de Coran. */
+        const val EXTRA_OPEN_QURAN = "open_quran"
 
         private const val NO_INVOCATION = -1L
 
