@@ -353,8 +353,16 @@ L'app est distribuée hors Play Store : chaque version est un APK signé joint �
 - **183 tests JVM verts** (28 nouveaux : parsing du tag et pré-versions refusées, complément par zéros, comparaison numérique, repli fermé des deux côtés ; les cinq portes du verdict et le veto du `versionCode` ; la réponse GitHub sur fixtures — choix de l'asset parmi plusieurs, `.apk` absent, URL en clair rejetée, brouillon, JSON tronqué, les deux empreintes du gabarit, `versionCode` présent/absent/non numérique) ; `assembleDebug` OK
 - **Aucune vérification sur appareil** cette session (non demandée) : voir « Prochaine étape »
 
+### Fait (session 15, suite) — release v1.3 préparée
+- `versionCode 6` / `versionName 1.3` ; APK release signé **12,86 Mo** (`miqaat-1.3.apk`), signature **v2 + v3**, certificat `1af97066…` — le **même** que la 1.2.1, donc l'installation par-dessus ne perd rien
+- SHA-256 de l'APK : `B77660271601027FAA2593613B8A0BF435642FCFA219B379BC41AC6E2F19C35A`
+- **`docs/release-notes-v1.3.md`** rédigé selon le gabarit, avec la ligne `versionCode: 6` **seule sur sa ligne** (une puce `- ` devant l'empêcherait de correspondre à l'ancre de début de ligne)
+- **`ReleaseNotesContractTest`** (créé) : relit les **vrais** fichiers `docs/release-notes-v*.md` et vérifie que l'app y trouve l'empreinte de l'APK — et non celle du certificat, qui figure dans la même section — et un `versionCode` lisible. ⚠ Une note mal formée ne casse **rien de visible** : elle prive silencieusement de la vérification, ou laisse proposer une version qu'Android refusera. C'est le seul garde-fou, et **il faut ajouter chaque nouveau fichier de notes à son ensemble `contractual`**
+- **185 tests JVM verts** (2 nouveaux) ; `assembleRelease` OK
+- ⚠ Reste à faire à la main : `git tag -a v1.3`, `git push origin v1.3`, puis la release GitHub par le formulaire web (`gh` n'est pas installé sur cette machine)
+
 ### Prochaine étape
-- **Publier une v1.3** (`versionCode 6`) : c'est la seule façon d'éprouver la mise à jour de bout en bout, puisqu'elle a besoin d'une release plus récente que l'installée. Suivre `docs/release.md`, et **ajouter la ligne `versionCode: 6` au corps de la release** (contrat de `docs/updates.md`)
+- **Publier la v1.3** : tag `v1.3`, release GitHub **ni brouillon ni pré-version** (sinon `/releases/latest` l'ignore et personne ne la voit), APK `miqaat-1.3.apk` joint, notes de `docs/release-notes-v1.3.md` collées telles quelles
 - **Éprouver la mise à jour sur appareil** (voir `docs/updates.md`) : ① la note apparaît sur l'accueil au lancement suivant ; ② « plus tard » la fait taire 7 jours, « ignorer cette version » définitivement ; ③ le téléchargement affiche sa progression et survit à un aller-retour vers les réglages ; ④ l'écran des sources inconnues s'ouvre, et le texte manuel apparaît si MIUI le refuse ; ⑤ l'APK s'installe **par-dessus** sans rien perdre (même clé) ; ⑥ à l'ouverture suivante, l'APK est effacé et la note a disparu ; ⑦ mode avion → l'écran reste consultable (cache) et le téléchargement échoue proprement ; ⑧ le tout en arabe RTL **et** en français LTR, en clair **et** en sombre
 - **Éprouver le repli navigateur** : couper `com.android.providers.downloads` (ou refuser les sources inconnues) et vérifier que « ouvrir la page de la version » aboutit
 - **Vérifier que la vérification ne part pas plus d'une fois par jour** : `run-as com.mohamed.miqaat cat shared_prefs/update.xml` après plusieurs ouvertures — `last_check_at` ne doit bouger qu'une fois

@@ -39,6 +39,14 @@ points, du plus important au moins :
    la seconde est annoncée par « SHA-256 du certificat : », qui ne suit pas la
    forme `clé : valeur` et n'est donc pas confondue. Ne pas inverser cet ordre.
 
+   ⚠ Les deux lignes doivent être **des lignes à elles seules**, hors puce de
+   liste : la ligne `versionCode:` est reconnue par une ancre de début de ligne,
+   et un `- ` devant l'empêcherait de correspondre. `ReleaseNotesContractTest`
+   relit les vrais fichiers `docs/release-notes-v*.md` et échoue si l'une des deux
+   devient illisible — c'est le seul garde-fou, une note mal formée ne casse rien
+   de visible. **Ajouter le nouveau fichier à son ensemble `contractual` à chaque
+   release.**
+
    ⚠ La ligne `versionCode:` est **optionnelle mais recommandée**. Elle oppose un
    veto quand le code publié n'est pas supérieur à celui installé, ce qui épargne à
    l'utilisateur de télécharger l'APK entier pour se voir opposer un « Application

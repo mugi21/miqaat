@@ -74,6 +74,11 @@ présente, une ligne `versionCode: <n>` qui empêche de proposer une version
 qu'Android refuserait d'installer. Le contrat exact — forme des lignes, nommage de
 l'asset, ordre des deux empreintes — est dans [updates.md](updates.md).
 
+Écrire les notes dans `docs/release-notes-v<version>.md`, **ajouter ce fichier à
+l'ensemble `contractual` de `ReleaseNotesContractTest`**, et lancer les tests : ils
+relisent le vrai fichier et échouent si l'empreinte ou le `versionCode` n'y sont
+pas lisibles. C'est le seul garde-fou — une note mal formée ne casse rien de visible.
+
 ## Si un jour Google Play
 
 Trois points à préparer, dans cet ordre de risque :
