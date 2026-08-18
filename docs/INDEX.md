@@ -15,6 +15,7 @@ vision, stack, roadmap et **État actuel** mis à jour à chaque fin de session.
 | [invocations.md](invocations.md) | Adhkār : invocations livrées et créées, moment du rappel, garde de dix minutes |
 | [quran.md](quran.md) | Écoute du Coran : l'API mp3quran et ses pièges, le cache, le lecteur, la sourate du moment |
 | [release.md](release.md) | Publier une version : clé de signature, build release, tag et release GitHub |
+| [updates.md](updates.md) | Se mettre à jour depuis GitHub : ce que l'app attend d'une release, l'installation, la friction MIUI |
 
 ## Règles de tenue
 

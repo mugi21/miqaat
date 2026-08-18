@@ -64,6 +64,16 @@ téléchargé est bien le nôtre :
 Get-FileHash app\build\outputs\apk\release\app-release.apk -Algorithm SHA256
 ```
 
+> ⚠ **La release ne doit être ni brouillon ni pré-version.** L'app interroge
+> `/releases/latest`, qui les ignore : une release laissée en brouillon n'est vue de
+> personne, et aucun utilisateur ne saura que la version existe.
+
+Depuis la v1.3, ces notes ne sont plus seulement lues par des humains : l'app en
+extrait l'empreinte SHA-256 (pour vérifier le fichier téléchargé) et, si elle est
+présente, une ligne `versionCode: <n>` qui empêche de proposer une version
+qu'Android refuserait d'installer. Le contrat exact — forme des lignes, nommage de
+l'asset, ordre des deux empreintes — est dans [updates.md](updates.md).
+
 ## Si un jour Google Play
 
 Trois points à préparer, dans cet ordre de risque :

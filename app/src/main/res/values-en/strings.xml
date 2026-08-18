@@ -215,6 +215,38 @@
     <string name="quran_player_stop">Stop playback</string>
     <string name="quran_player_open">Open the player</string>
 
+    <!-- Update from GitHub (D44): temporary, until Google Play -->
+    <string name="update_settings_title">App update</string>
+    <string name="update_settings_current">Version %1$s</string>
+    <string name="update_settings_available">Version %1$s available</string>
+    <string name="update_home_banner">A new version of Miqaat is available: %1$s</string>
+    <string name="update_action_view">View</string>
+    <string name="update_installed_version">Installed version: %1$s</string>
+    <string name="update_new_version">New version: %1$s</string>
+    <string name="update_notes_title">What\'s new</string>
+    <string name="update_no_notes">This version comes with no release notes.</string>
+    <string name="update_up_to_date">You have the latest version.</string>
+    <string name="update_never_checked">Never checked</string>
+    <string name="update_last_checked">Last checked: %1$s</string>
+    <string name="update_action_check">Check now</string>
+    <string name="update_checking">Checking…</string>
+    <string name="update_action_download">Download (%1$s)</string>
+    <string name="update_downloading">Downloading… %1$d %%</string>
+    <string name="update_action_install">Install</string>
+    <string name="update_action_cancel">Cancel download</string>
+    <string name="update_action_skip">Skip this version</string>
+    <string name="update_action_browser">Open the release page</string>
+    <string name="update_unknown_sources_title">Allow installation</string>
+    <string name="update_unknown_sources_hint">To install the update, Android asks for permission to install apps from Miqaat. You grant it once.</string>
+    <string name="update_unknown_sources_manual">Open Settings ← Apps ← Miqaat ← Install unknown apps, and turn the permission on.</string>
+    <string name="update_error_network">Could not check for updates. Check your connection.</string>
+    <string name="update_error_download">The download failed.</string>
+    <string name="update_error_checksum">The downloaded file does not match its checksum and was deleted. Try the release page instead.</string>
+    <string name="update_error_install">The system installer could not be opened.</string>
+    <string name="update_auto_check">Check automatically</string>
+    <string name="update_auto_check_hint">Once a day at most, when the app opens.</string>
+    <string name="update_privacy_note">Miqaat sends nothing: it only reads the list of versions published on github.com, and downloads only when you ask.</string>
+
     <!-- Home screen widget -->
     <string name="widget_label">Miqaat — Next prayer</string>
     <string name="widget_description">The next prayer, the time remaining and today\'s times on your home screen</string>

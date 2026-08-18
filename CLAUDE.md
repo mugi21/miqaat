@@ -18,7 +18,8 @@ Application Android native de temps de prière (Salat) :
 | **Jetpack Compose + Material 3** | UI déclarative moderne, standard actuel d'Android ; excellent support RTL natif |
 | **Adhan** (`com.batoulapps.adhan:adhan2`, batoulapps/adhan-kotlin) | Calcul astronomique des temps de prière 100 % local, aucun appel réseau, librairie de référence maintenue |
 | **AlarmManager seul** (alarmes exactes) | `setExactAndAllowWhileIdle` pour la ponctualité même en Doze ; la chaîne se replanifie elle-même, et une seconde alarme inexacte sert de chien de garde. **Pas de WorkManager** : travail déférable, donc incapable de garantir la ponctualité — voir D33 |
-| **Media3 / ExoPlayer** (écoute du Coran seulement) | Seule dépendance lourde acceptée, et seule fonctionnalité en réseau : buffering d'un flux instable, focus audio, notification média et écran verrouillé. Voir D41 et D42 |
+| **Media3 / ExoPlayer** (écoute du Coran seulement) | Seule dépendance lourde acceptée : buffering d'un flux instable, focus audio, notification média et écran verrouillé. Voir D41 et D42 |
+| **`HttpURLConnection` + `org.json`** pour tout le réseau (mp3quran, GitHub) | Deux à trois appels GET sans authentification ne justifient pas Retrofit/OkHttp/Moshi. Le parseur est toujours un `object` pur prenant une `String`, donc testable en JVM |
 | **Room** | Stockage local : paramètres, cache des coordonnées, futur tracker de prières |
 | **MVVM + ViewModel + StateFlow** | Architecture standard Android, testable, survit aux rotations |
 | `minSdk 26` | java.time et `HijrahDate` disponibles nativement ; couvre ~95 % du parc |
@@ -57,13 +58,16 @@ widget/          Widget d'écran d'accueil (RemoteViews)
 ### v1.2
 ✅ écoute du Coran (mp3quran, récitateurs + favoris, pause automatique à l'adhan, sourate du moment) · ⬜ tracker de prières · ⬜ événements du calendrier islamique
 
+### v1.3
+✅ mise à jour de l'app depuis GitHub Releases (note d'accueil, téléchargement et installation dans l'app, opt-out) — **temporaire**, jusqu'à une publication sur Google Play
+
 ### Plus tard
 Multilingue (FR/AR/EN) · sons d'adhan personnalisés · statistiques
 
 ## Contraintes techniques permanentes
 
 - Permissions : `SCHEDULE_EXACT_ALARM` / `USE_EXACT_ALARM`, `POST_NOTIFICATIONS` (Android 13+), localisation — à demander proprement avec explications
-- `INTERNET` depuis la session 14, pour la **seule** écoute du Coran : aucune fonction cœur n'y touche, aucun SDK de tracking, un seul hôte contacté (voir D41)
+- `INTERNET` depuis la session 14, pour **deux** fonctionnalités seulement, dont aucune n'est cœur : l'écoute du Coran (mp3quran) et la mise à jour depuis GitHub, celle-ci coupable par l'utilisateur. Aucune fonction cœur n'y touche, aucun SDK de tracking, aucune donnée envoyée (voir D41 amendée par D44)
 - `BOOT_COMPLETED` → replanifier toutes les alarmes après reboot
 - Doze mode : utiliser `setExactAndAllowWhileIdle` / `setAlarmClock` ; les notifications ne doivent JAMAIS être en retard
 - Aucune dépendance réseau pour les fonctionnalités cœur ; aucun SDK tiers de tracking
@@ -76,12 +80,14 @@ et leurs raisons), `file-map.md` (carte des fichiers), `i18n.md` (multilingue),
 `notifications.md` (chaîne, canaux, mode d'alerte), `reliability.md` (pourquoi
 l'adhan n'arrive pas et comment le réparer), `prayer-times-accuracy.md` (coller à un
 calendrier officiel : arrondi, marge de précaution, protocole de mesure).
-`quran.md` (l'API mp3quran et ses pièges, le cache, le lecteur, la sourate du moment).
+`quran.md` (l'API mp3quran et ses pièges, le cache, le lecteur, la sourate du moment),
+`release.md` (publier une version) et `updates.md` (ce que l'app attend d'une release
+GitHub pour se mettre à jour, et la friction MIUI à l'installation).
 `CLAUDE.md` reste la mémoire vivante : vision, stack, roadmap, État actuel.
 
 ## État actuel
 
-**Dernière mise à jour : 2026-08-15 (fin de session 14)**
+**Dernière mise à jour : 2026-08-18 (fin de session 15)**
 
 ### Fait (session 1)
 - Squelette Android Studio (AGP 9.2.1, Kotlin 2.2.10, Compose BOM 2026.02.01, minSdk 26, targetSdk 36)
@@ -326,7 +332,32 @@ Release v1.2 installée sur le Redmi Note 8, quatre points remontés, tous corri
 - Champ de recherche doté d'une loupe et d'une croix d'effacement (`ic_search.xml`, `ic_close.xml`)
 - **155 tests JVM verts** (4 nouveaux sur le décompte des versets) ; `assembleDebug` OK
 
+### Fait (session 15) — mise à jour de l'app depuis GitHub
+L'app est distribuée hors Play Store : chaque version est un APK signé joint à un tag du dépôt, et rien ne prévenait l'utilisateur qu'une nouvelle existait. Elle lit désormais `/releases/latest` elle-même, l'annonce sur l'accueil, et sait télécharger puis faire installer l'APK. **Dispositif temporaire**, en attendant un compte Google Play développeur — ses critères de retrait sont écrits dès maintenant dans D44.
+
+- **Aucune dépendance nouvelle** : `HttpURLConnection` + `org.json` (calque de `Mp3QuranApi`), `DownloadManager` et `FileProvider` (androidx.core, déjà là). `libs.versions.toml` n'est pas touché
+- **`domain/update/AppVersion.kt`** (JVM pur) : compare le `tag_name` de la release au `versionName` du paquet **réellement installé** — lu au `packageManager` et non à `BuildConfig`, qui n'est d'ailleurs pas généré ici : après un sideload, la question est précisément « qu'est-ce qui tourne vraiment ? ». **Repli fermé** : dès qu'un côté est illisible, rien n'est proposé — la règle de D34 transposée. ⚠ Un `-` ou un `+` fait échouer la lecture **entière** et n'est pas un séparateur qu'on couperait, sinon `v1.3-rc1` se ferait passer pour `1.3` ; et la comparaison est numérique, jamais lexicographique (`1.10` > `1.9`, le bug classique du genre)
+- **`domain/update/ReleaseInfo.kt`** : `UpdateVerdict.shouldShowOnHome` (cinq portes : opt-out, report, cache vide, version ignorée, pas plus récente) et le **veto du `versionCode`** — une ligne `versionCode: N` dans le corps de la release l'emporte sur le tag, parce qu'Android refuse tout `versionCode` non croissant et le refuse **après** le téléchargement, par un « Application non installée » que rien n'explique. Ligne absente → le tag décide seul, un oubli de rédaction n'éteint pas la détection
+- **`data/update/GithubReleaseApi.kt`** : un GET, parseur en `object` pur donc testable sur fixtures. ⚠ GitHub répond **403 sans `User-Agent`** (le seul de ce cas dans l'app) ; quota anonyme 60 req/h, hors d'atteinte à une vérification par jour. Le parseur choisit l'asset `.apk` (préférant `miqaat-`), rejette toute URL non `https://`, revérifie `draft`/`prerelease`, et extrait des notes l'empreinte SHA-256 et le `versionCode`. ⚠ Le gabarit de `release.md` publie **deux** empreintes (APK puis certificat) : c'est la première étiquetée `SHA-256 :` qui gagne, la seconde étant annoncée par « SHA-256 du certificat », qui ne suit pas la forme `clé : valeur`
+- **`data/update/UpdateLog.kt`** en **SharedPreferences** et non DataStore : la note d'accueil a besoin d'une lecture **synchrone** (le repository amorce son `StateFlow` dans son constructeur, donc rien ne clignote), et l'argument qui avait fait naître le second DataStore du Coran (« la position s'écrit à chaque pause ») joue ici en sens inverse — une écriture par jour. Tout est persisté, **notes de version comprises** : après une seule vérification réussie, la note et l'écran entier s'affichent hors ligne ; seul le téléchargement demande le réseau
+- **`data/update/UpdateRepository.kt`** : la vérification ne part **que depuis l'activité** (`MainActivity.onCreate`) — jamais d'un receiver, jamais de la chaîne d'alarmes, jamais d'un travail différé (D33 tient). Au plus une fois par 24 h, `@Volatile inFlight` parce qu'un changement de langue appelle `recreate()`, et **`lastCheckAt` n'est écrit qu'en cas de succès** : un échec ne consomme pas le quota
+- **`data/update/ApkInstaller.kt`** : `setDestinationInExternalFilesDir(DIRECTORY_DOWNLOADS)` n'exige **aucune permission de stockage** à aucun niveau d'API ; taille puis SHA-256 vérifiés ; `FileProvider` + `ACTION_VIEW` `application/vnd.android.package-archive` + `FLAG_GRANT_READ_URI_PERMISSION` (sans lui : « Analyse impossible ») ; garde `canRequestPackageInstalls()` puis cascade `||` vers l'écran des sources inconnues, comme celle de l'optimisation de batterie. ⚠ Le nom du fichier vient de **notre** tag filtré, jamais du `name` de l'asset distant
+- **`PackageInstaller` en session écarté** (D44) : il exigerait un `PendingIntent` **mutable** (API 31+), un receiver `RECEIVER_NOT_EXPORTED` (API 34+) et une table de statuts, pour un seul avantage — l'écriture en flux — sans objet puisque `DownloadManager` a déjà posé le fichier. Sur une surcouche hostile, le chemin le plus banal est le plus sûr
+- **Progression par sondage du curseur, aucun `BroadcastReceiver`** : `ACTION_DOWNLOAD_COMPLETE` ne donne que la fin (il faudrait sonder de toute façon), un receiver dynamique doit déclarer son exposition depuis Android 14, et hors écran la notification de `DownloadManager` fait le travail gratuitement. Boucle `delay(500)` dans `viewModelScope`, `download_id` persisté pour se raccrocher après une mort du processus
+- **Nettoyage à l'ouverture suivante** (`cleanUpIfInstalled`) : après l'installation le processus est remplacé, plus rien de nous ne s'exécute. Ça ramasse au passage les fichiers d'une installation abandonnée. `RescheduleReceiver` n'est pas touché
+- **Manifeste** : `REQUEST_INSTALL_PACKAGES` + le **premier `<provider>` du projet** (`FileProvider`, `${applicationId}.updates`) + `res/xml/file_paths.xml` (`external-files-path path="Download/"` — une erreur ici ne se voit qu'à l'installation, par un « Failed to find configured root »). **Aucun ajout au bloc `<queries>`** : le repli navigateur est un intent implicite passé à `startActivity`, hors du filtrage de visibilité d'Android 11 — c'est `resolveActivity` qui est filtré, et on n'en utilise pas. Le commentaire au-dessus d'`INTERNET` est réécrit
+- **D41 amendée (D44)** : trois hôtes désormais (`api.github.com`, puis `github.com` et son CDN sur tape explicite) au lieu d'un. Rien n'est envoyé, aucun identifiant, aucun SDK, aucune fonction cœur ne touche au réseau, la baseline « دون إنترنت » reste vraie. Mais c'est le **premier appel réseau que l'app fait d'elle-même**, sans qu'on ait ouvert une fonctionnalité en réseau — d'où l'opt-out, que l'écoute du Coran n'avait pas besoin d'avoir
+- **UI** : 8ᵉ entrée à `enum Screen` (**D7 tient** — une entrée, une branche de `when`, le `BackHandler` générique). Écran et non dialogue : notes multi-paragraphes, progression qui survit à un aller-retour vers un écran système, et une destination nécessaire **même quand tout est à jour**. La note d'accueil suit le patron de `ReliabilityBanner` (composable autonome, `if (!visible) return`), en `tertiaryContainer` et non `errorContainer` — une version disponible n'est pas une erreur —, et **après** celle de la fiabilité : l'avertissement dit que l'app échoue à son métier, la mise à jour n'est qu'un agrément. L'interrupteur d'opt-out vit sur l'écran de mise à jour et non dans les réglages, comme le témoin OEM vit sur l'écran de fiabilité (D35)
+- **30 clés `update_*`** dans les **trois** `strings.xml` ; la taille du fichier passe par `Formatter.formatShortFileSize` (déjà localisé par Android, donc aucune clé à créer). ⚠ Le pourcentage s'écrit `%%`, sinon `String.format` lève
+- **`docs/updates.md`** (créé) : le contrat du corps de release, ce que l'app fait et quand, la friction MIUI, la liste « la mise à jour ne s'affiche pas, que vérifier », et la façon d'éprouver la chaîne sans rien publier
+- **183 tests JVM verts** (28 nouveaux : parsing du tag et pré-versions refusées, complément par zéros, comparaison numérique, repli fermé des deux côtés ; les cinq portes du verdict et le veto du `versionCode` ; la réponse GitHub sur fixtures — choix de l'asset parmi plusieurs, `.apk` absent, URL en clair rejetée, brouillon, JSON tronqué, les deux empreintes du gabarit, `versionCode` présent/absent/non numérique) ; `assembleDebug` OK
+- **Aucune vérification sur appareil** cette session (non demandée) : voir « Prochaine étape »
+
 ### Prochaine étape
+- **Publier une v1.3** (`versionCode 6`) : c'est la seule façon d'éprouver la mise à jour de bout en bout, puisqu'elle a besoin d'une release plus récente que l'installée. Suivre `docs/release.md`, et **ajouter la ligne `versionCode: 6` au corps de la release** (contrat de `docs/updates.md`)
+- **Éprouver la mise à jour sur appareil** (voir `docs/updates.md`) : ① la note apparaît sur l'accueil au lancement suivant ; ② « plus tard » la fait taire 7 jours, « ignorer cette version » définitivement ; ③ le téléchargement affiche sa progression et survit à un aller-retour vers les réglages ; ④ l'écran des sources inconnues s'ouvre, et le texte manuel apparaît si MIUI le refuse ; ⑤ l'APK s'installe **par-dessus** sans rien perdre (même clé) ; ⑥ à l'ouverture suivante, l'APK est effacé et la note a disparu ; ⑦ mode avion → l'écran reste consultable (cache) et le téléchargement échoue proprement ; ⑧ le tout en arabe RTL **et** en français LTR, en clair **et** en sombre
+- **Éprouver le repli navigateur** : couper `com.android.providers.downloads` (ou refuser les sources inconnues) et vérifier que « ouvrir la page de la version » aboutit
+- **Vérifier que la vérification ne part pas plus d'une fois par jour** : `run-as com.mohamed.miqaat cat shared_prefs/update.xml` après plusieurs ouvertures — `last_check_at` ne doit bouger qu'une fois
 - **Éprouver l'écoute du Coran sur appareil** : ① le catalogue se charge, un récitateur mis en favori remonte en tête ; ② une sourate se lance, les contrôles marchent depuis la notification **et** l'écran verrouillé ; ③ mode avion → message clair et liste toujours consultable (cache) ; ④ **D43 cas sonore** : lancer une sourate, déclencher la notification de test en mode sonnerie → pause, adhan, **reprise seule** ; ⑤ **D43 cas muet** : téléphone en vibreur, même test → pause **sans** reprise, mini-lecteur toujours visible ; ⑥ quitter l'app en lecture → la notification survit ; en pause → elle disparaît ; ⑦ le tout en arabe RTL **et** en français LTR, en clair **et** en sombre
 - **Vérifier que la 4ᵉ icône de l'accueil passe** sur un écran de 360 dp à l'échelle de police 1,8 ; si c'est trop serré, l'entrée Coran passe au mini-lecteur et à une ligne dans les réglages
 - **Vérifier la migration Room 3→4** sur un appareil qui porte déjà des données (position, invocations) : `user_version = 4` et rien de perdu

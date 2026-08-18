@@ -28,6 +28,8 @@ Package racine : `com.mohamed.miqaat` (`app/src/main/java/com/mohamed/miqaat/`).
 | **`QiblaCalculator.kt`** | Azimut de la Qibla (grand cercle) et distance à la Kaaba (haversine) + utilitaires d'angles (`normalizeDegrees`, `shortestAngleDelta`, `isAlignedWithQibla`, `lerpDegrees`). |
 | **`QuranAudio.kt`** | L'URL d'un enregistrement mp3quran (`server` + `%03d.mp3`) et la file de lecture d'un moshaf. Seul point de l'app qui construit une URL audio. |
 | **`QuranSuggestion.kt`** | La sourate du moment : cinq règles bornées par les **horaires réels du jour**. Voir [quran.md](quran.md). |
+| **`update/AppVersion.kt`** | Comparaison de deux versions (le tag d'une release contre le `versionName` installé). ⚠ Repli fermé : une version illisible ne propose jamais rien, et la comparaison est numérique (`1.10` > `1.9`). Voir D44. |
+| **`update/ReleaseInfo.kt`** | Une release GitHub réduite à l'utile, et `UpdateVerdict` — dont le veto du `versionCode` publié dans les notes. Voir [updates.md](updates.md). |
 | `model/PrayerName.kt`, `model/DailyPrayerTimes.kt` | Les six moments du jour. |
 | `model/MethodOption.kt` | Les 21 méthodes de calcul (11 d'Adhan + 10 nationales reconstruites), chacune avec sa `TimeCalibration`. |
 | **`model/TimeCalibration.kt`** | Décalage en secondes par moment + arrondi à la minute (`MinuteRounding`) : comment une méthode colle à son calendrier officiel. Voir D40 et [prayer-times-accuracy.md](prayer-times-accuracy.md). |
@@ -58,6 +60,10 @@ Package racine : `com.mohamed.miqaat` (`app/src/main/java/com/mohamed/miqaat/`).
 | **`quran/Mp3QuranApi.kt`** | Les deux appels à l'API v3 (`HttpURLConnection` + `org.json`, aucune pile réseau), la table des codes de langue (⚠ anglais = `eng`) et le parseur JSON → domaine, **pur donc testable**. |
 | **`quran/QuranCatalogRepository.kt`** | Le catalogue : `Flow` depuis Room, rechargement si vide / périmé (7 jours) / autre langue, et les favoris. Voir [quran.md](quran.md). |
 | **`quran/QuranPreferences.kt`** | Second DataStore (`quran`), tenu à part de `settings` : la position de lecture s'écrit à chaque pause et ne doit pas faire réémettre les réglages de prière. |
+| **`update/GithubReleaseApi.kt`** | `/releases/latest` (`HttpURLConnection` + `org.json`, aucune pile réseau) et le parseur JSON → domaine, **pur donc testable** : choix de l'asset `.apk`, empreinte SHA-256 et ligne `versionCode` extraites des notes. ⚠ GitHub répond 403 sans `User-Agent`. |
+| **`update/UpdateLog.kt`** | `SharedPreferences` : release en cache (notes comprises, donc consultable hors ligne), dernière vérification, version ignorée, report de 7 jours, opt-out, téléchargement en cours. |
+| **`update/UpdateRepository.kt`** | Vérifie au plus une fois par 24 h et **seulement depuis l'activité** ; `lastCheckAt` n'est écrit qu'en cas de succès. Lit la version installée au `packageManager`, jamais à `BuildConfig`. |
+| **`update/ApkInstaller.kt`** | `DownloadManager` (dossier privé, aucune permission de stockage), vérification taille + SHA-256, `FileProvider` + `ACTION_VIEW`, écran des sources inconnues, repli navigateur. ⚠ Le nom du fichier vient de notre tag, jamais du JSON distant. |
 | **`compass/CompassDataSource.kt`** | Capteurs → `Flow<CompassReading>` : choix du capteur et replis, permutation des axes selon la rotation de l'écran, déclinaison magnétique (`GeomagneticField`, hors ligne), lissage circulaire. |
 
 ## `notifications/`
@@ -104,6 +110,9 @@ Package racine : `com.mohamed.miqaat` (`app/src/main/java/com/mohamed/miqaat/`).
 | **`reliability/ReliabilityScreen.kt`** | Les cinq contrôles avec leur bouton de correction, la carte du démarrage automatique, prochaine alerte / dernière reçue, et une notification de test. |
 | **`reliability/ReliabilityViewModel.kt`**, **`reliability/ReliabilityUiState.kt`** | Diagnostic réévalué à chaque `ON_RESUME` ; contexte de l'application, jamais celui de l'activité. |
 | **`reliability/ReliabilityBanner.kt`** | L'avertissement d'accueil, affiché seulement sur du critique et du certain, avec report de 14 jours. Voir D34. |
+| **`update/UpdateScreen.kt`** | Version installée / disponible, notes de la release, téléchargement avec progression, installation, repli navigateur, et l'interrupteur d'opt-out avec sa phrase de confidentialité. |
+| **`update/UpdateViewModel.kt`**, **`update/UpdateUiState.kt`** | Sondage du curseur `DownloadManager` (aucun receiver), raccroche un téléchargement en cours au retour, relit « sources inconnues » à chaque `ON_RESUME`. |
+| **`update/UpdateBanner.kt`** | La note d'accueil, en `tertiaryContainer` : posée **après** celle de la fiabilité, avec « plus tard » (7 jours) et « ignorer cette version ». Voir D44. |
 | **`qibla/QiblaScreen.kt`** | Écran Qibla : en-tête, cadran, message d'état, angle et distance, vibration à l'alignement. |
 | **`qibla/QiblaCompass.kt`** | Le cadran, entièrement dessiné au Canvas avec les couleurs du thème. |
 | **`qibla/QiblaViewModel.kt`**, **`qibla/QiblaUiState.kt`** | Position figée à l'ouverture + flux des capteurs ; libérés dès que l'écran disparaît. |
@@ -128,6 +137,7 @@ Package racine : `com.mohamed.miqaat` (`app/src/main/java/com/mohamed/miqaat/`).
 | `res/values/strings.xml` | Arabe (langue par défaut). |
 | `res/values-fr/`, `res/values-en/` | Français, anglais — voir [i18n.md](i18n.md). |
 | `res/xml/locales_config.xml` | Langues exposées au sélecteur d'Android 13+. |
+| `res/xml/file_paths.xml` | Le seul dossier ouvert par le `FileProvider` : les téléchargements privés de l'app, le temps de passer l'APK à l'installateur. ⚠ Le chemin doit rester `Download/` sous `external-files-path`. Voir [updates.md](updates.md). |
 | `res/xml/widget_next_prayer_info.xml` | Descripteur du widget (taille 4×2, aperçu, période de secours). |
 | `res/layout/widget_next_prayer.xml` | Mise en page du widget (RemoteViews : ville, prochaine prière, `Chronometer`, cinq créneaux `widget_slot_1..5`). |
 | `res/values/colors.xml`, `values-night/colors.xml` | `splash_background` (vert de marque, **sans variante nuit**) + **palette `widget_*`** (à garder synchronisée avec `Color.kt`). |
@@ -169,5 +179,6 @@ fiabilité**. Tous en JVM pur, aucun émulateur nécessaire.
 | Changer une tolérance de retard | `domain/AlarmFreshness.kt` ; celle du rappel doit rester **sous** `LEAD_CHOICES.min()` |
 | Ajouter une règle de « sourate du moment » | `domain/QuranSuggestion.kt` + `ui/quran/QuranLabels.kt` + les **trois** `strings.xml` + un test — voir [quran.md](quran.md) |
 | Toucher au catalogue du Coran ou à sa péremption | `data/quran/QuranCatalogRepository.kt` ; ⚠ le code de langue de l'anglais est `eng` |
+| Changer la façon dont l'app se met à jour | `domain/update/`, `data/update/`, `ui/update/` + le `<provider>` et `REQUEST_INSTALL_PACKAGES` du manifeste — voir [updates.md](updates.md) |
 | Ajouter un texte | les **trois** `strings.xml` |
 | Ajouter une surface hors activité (widget, notification…) | l'entourer de `AppLocale.wrap()`, sinon elle ignore la langue choisie dans l'app |

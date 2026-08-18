@@ -215,6 +215,38 @@
     <string name="quran_player_stop">Arrêter la lecture</string>
     <string name="quran_player_open">Ouvrir le lecteur</string>
 
+    <!-- Mise à jour depuis GitHub (D44) : temporaire, en attendant Google Play -->
+    <string name="update_settings_title">Mise à jour de l\'application</string>
+    <string name="update_settings_current">Version %1$s</string>
+    <string name="update_settings_available">Version %1$s disponible</string>
+    <string name="update_home_banner">Une nouvelle version de Miqaat est disponible : %1$s</string>
+    <string name="update_action_view">Voir</string>
+    <string name="update_installed_version">Version installée : %1$s</string>
+    <string name="update_new_version">Nouvelle version : %1$s</string>
+    <string name="update_notes_title">Nouveautés</string>
+    <string name="update_no_notes">Cette version n\'est accompagnée d\'aucune note.</string>
+    <string name="update_up_to_date">Vous avez la dernière version.</string>
+    <string name="update_never_checked">Aucune vérification effectuée</string>
+    <string name="update_last_checked">Dernière vérification : %1$s</string>
+    <string name="update_action_check">Vérifier maintenant</string>
+    <string name="update_checking">Vérification…</string>
+    <string name="update_action_download">Télécharger (%1$s)</string>
+    <string name="update_downloading">Téléchargement… %1$d %%</string>
+    <string name="update_action_install">Installer</string>
+    <string name="update_action_cancel">Annuler le téléchargement</string>
+    <string name="update_action_skip">Ignorer cette version</string>
+    <string name="update_action_browser">Ouvrir la page de la version</string>
+    <string name="update_unknown_sources_title">Autoriser l\'installation</string>
+    <string name="update_unknown_sources_hint">Pour installer la mise à jour, Android demande l\'autorisation d\'installer des applications depuis Miqaat. Elle se donne une seule fois.</string>
+    <string name="update_unknown_sources_manual">Ouvrez Réglages ← Applications ← Miqaat ← Installer des applications inconnues, et activez l\'autorisation.</string>
+    <string name="update_error_network">Vérification impossible. Vérifiez votre connexion.</string>
+    <string name="update_error_download">Le téléchargement a échoué.</string>
+    <string name="update_error_checksum">Le fichier téléchargé ne correspond pas à son empreinte, il a été supprimé. Essayez la page de la version.</string>
+    <string name="update_error_install">L\'installateur du système n\'a pas pu s\'ouvrir.</string>
+    <string name="update_auto_check">Vérification automatique</string>
+    <string name="update_auto_check_hint">Une fois par jour au plus, à l\'ouverture de l\'application.</string>
+    <string name="update_privacy_note">Miqaat n\'envoie rien : il lit seulement la liste des versions publiées sur github.com, et ne télécharge que si vous le demandez.</string>
+
     <!-- Widget de l'écran d'accueil -->
     <string name="widget_label">Miqaat — Prochaine prière</string>
     <string name="widget_description">La prochaine prière, le temps restant et les horaires du jour sur votre écran d\'accueil</string>

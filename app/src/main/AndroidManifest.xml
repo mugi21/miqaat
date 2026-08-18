@@ -28,13 +28,23 @@
     <!-- Position approximative : suffisante pour les horaires (précision « ville »),
          un seul fix ponctuel, jamais en arrière-plan -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <!-- Écoute du Coran (D41) : la SEULE fonctionnalité en réseau de l'application.
-         Aucune fonction cœur — horaires, alarmes, Qibla, calendrier, adhkār, widget —
-         n'y touche, et l'app reste entièrement utilisable hors ligne sans elle.
-         Un seul hôte contacté (mp3quran.net et ses serveurs de fichiers), aucune
-         donnée envoyée, aucun identifiant, toujours aucun SDK tiers. -->
+    <!-- Réseau (D41, amendée par D44) : deux fonctionnalités seulement, aucune
+         d'elles n'étant cœur. Les horaires, alarmes, Qibla, calendrier, adhkār et
+         widget n'y touchent pas, et l'app reste entièrement utilisable hors ligne.
+         ① Écoute du Coran → mp3quran.net et ses serveurs de fichiers.
+         ② Mise à jour depuis GitHub → api.github.com (métadonnées, une fois par
+            jour au plus, et l'utilisateur peut le couper) puis github.com pour
+            l'APK, sur sa demande explicite.
+         Toujours : aucune donnée envoyée, aucun identifiant, aucun compte,
+         aucun SDK tiers. -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- Installer l'APK d'une release GitHub (D44). L'application est distribuée
+         hors Play : sans cette permission, Android 8+ refuse d'ouvrir
+         l'installateur système. Temporaire — à retirer avec l'écran de mise à jour
+         le jour d'une publication sur Play. -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <!-- La lecture continue app fermée : contrairement à l'adhan (shortService,
          quelques dizaines de secondes), une récitation dure une heure. -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
@@ -146,6 +156,21 @@
                 <action android:name="android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED" />
             </intent-filter>
         </receiver>
+
+        <!-- Passer l'APK téléchargé à l'installateur système (D44). Depuis
+             Android 7, exposer un file:// à une autre application lève
+             FileUriExposedException. Le provider n'ouvre qu'un seul dossier — les
+             téléchargements privés de l'app, effacés à la désinstallation — et
+             seulement le temps d'un intent (grantUriPermissions). -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.updates"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
     </application>
 
 </manifest>

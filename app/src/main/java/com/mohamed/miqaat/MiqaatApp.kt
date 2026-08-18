@@ -11,6 +11,7 @@ import com.mohamed.miqaat.data.location.LocationRepository
 import com.mohamed.miqaat.data.quran.QuranCatalogRepository
 import com.mohamed.miqaat.data.quran.QuranPreferences
 import com.mohamed.miqaat.data.settings.SettingsRepository
+import com.mohamed.miqaat.data.update.UpdateRepository
 import com.mohamed.miqaat.notifications.NotificationChannels
 import com.mohamed.miqaat.quran.QuranPlayerConnection
 
@@ -51,6 +52,13 @@ class MiqaatApp : Application() {
      * Coran, donc l'app ne paie rien si la fonctionnalité ne l'intéresse pas.
      */
     val quranPlayer: QuranPlayerConnection by lazy { QuranPlayerConnection(this) }
+
+    /**
+     * La veille des releases GitHub, en attendant une publication sur Play (D44).
+     * `lazy` comme les autres : rien n'existe tant que l'activité n'a pas demandé
+     * de vérification.
+     */
+    val updateRepository: UpdateRepository by lazy { UpdateRepository(this) }
 
     override fun onCreate() {
         super.onCreate()

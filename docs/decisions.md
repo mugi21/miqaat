@@ -844,3 +844,158 @@ connexion asynchrone n'aboutirait pas à temps.
 `PrayerAlarmScheduler`, ni `AlarmEventResolver`, ni `AlertSoundService` ne sont
 touchés. C'est le receiver seul qui fait le lien, et il le fait **après** avoir
 posé la notification. La ponctualité de l'adhan ne dépend en rien du Coran.
+
+## D44 — Se mettre à jour depuis GitHub Releases, et l'amendement de D41
+
+L'app est distribuée hors Play Store : chaque version est un APK signé joint à un
+tag du dépôt. Rien ne prévenait l'utilisateur qu'une nouvelle existait — il fallait
+qu'il pense à aller voir. En attendant un compte Google Play développeur, l'app
+lit elle-même `/releases/latest`, l'annonce sur l'accueil, et sait télécharger puis
+faire installer l'APK.
+
+**Dispositif temporaire, et ses critères de retrait écrits tout de suite.** Le jour
+d'une publication sur Play : supprimer `Screen.UPDATE`, `ui/update/`,
+`data/update/`, `domain/update/`, le `<provider>` du manifeste,
+`REQUEST_INSTALL_PACKAGES`, `res/xml/file_paths.xml`, les clés `update_*` des trois
+`strings.xml`, et revenir sur l'amendement ci-dessous. Écrit maintenant, cela ne se
+redécouvrira pas dans deux ans.
+
+### D41 est amendée
+
+D41 affirmait « un seul hôte contacté ». Il y en a désormais **trois** :
+`api.github.com` (environ deux kilooctets de métadonnées, une fois par jour au
+plus), puis `github.com` et son CDN de fichiers pour l'APK, sur tape explicite.
+
+Ce qui **ne change pas** : rien n'est envoyé, aucun identifiant, aucun compte,
+aucun cookie, aucun SDK tiers, et aucune fonction cœur — horaires, alarmes, Qibla,
+calendrier, adhkār, widget — ne touche au réseau. La baseline « دون إنترنت » reste
+vraie : elle parle des horaires.
+
+Ce qui **change et doit être dit** : c'est le premier appel réseau que
+l'application fait **d'elle-même**, sans que l'utilisateur ait ouvert une
+fonctionnalité en réseau. L'écoute du Coran n'avait pas besoin d'un interrupteur —
+on n'y arrive qu'en ouvrant l'écran. La vérification de mise à jour, si, et il est
+sur l'écran de mise à jour plutôt que dans les réglages : couper la vérification
+veut dire « l'app ne contactera plus github.com », phrase qui ne tient pas dans le
+sous-titre d'une ligne. Même raison que le témoin de démarrage automatique de D35,
+qui vit sur l'écran de fiabilité et non ailleurs.
+
+La vérification ne part **que depuis l'activité** (`MainActivity.onCreate`) :
+jamais d'un receiver, jamais de la chaîne d'alarmes, jamais d'un travail différé.
+Au plus une fois par 24 h, et `lastCheckAt` n'est écrit **qu'en cas de succès** —
+un échec ne consomme pas le quota, et la fréquence de réessai reste bornée par le
+nombre d'ouvertures de l'app.
+
+### Comparer deux versions, avec un repli fermé
+
+`AppVersion` (JVM pur) compare le `tag_name` de la release au `versionName` du
+paquet **réellement installé** — lu au `packageManager` et non à `BuildConfig`,
+qui n'est d'ailleurs pas généré ici : après un sideload, la question est
+précisément « qu'est-ce qui tourne vraiment ? ».
+
+Dès qu'un des deux côtés est illisible, `isNewer` rend `false`. C'est la règle de
+D34 transposée : `ReliabilityVerdict` n'alarme jamais sur un état inconnu, on ne
+propose jamais de télécharger vingt mégaoctets sur une comparaison douteuse.
+
+⚠ Un `-` ou un `+` dans le tag fait échouer la lecture **entière** ; ce n'est pas
+un séparateur qu'on couperait. Sans cette règle, `v1.3-rc1` se ferait passer pour
+`1.3`. `/releases/latest` exclut déjà brouillons et pré-versions, mais une décision
+locale ne repose pas sur un contrat distant — le parseur les revérifie aussi.
+
+⚠ La comparaison est numérique, jamais lexicographique : `1.10` est postérieure à
+`1.9`. Un test le verrouille, c'est le bug classique du genre.
+
+**Le `versionCode` du corps de la release a le dernier mot.** Une ligne
+`versionCode: 6` dans les notes, si elle existe, l'emporte sur le tag : une valeur
+inférieure ou égale à celle installée oppose un veto. Android refuse d'installer un
+paquet dont le `versionCode` ne croît pas, et il le refuse **après** le
+téléchargement, par un « Application non installée » que rien n'explique. La ligne
+absente, le tag décide seul — un oubli de rédaction ne doit pas éteindre la
+détection. Le contrat est dans [updates.md](updates.md).
+
+### Télécharger, vérifier, installer
+
+`DownloadManager` plutôt qu'un téléchargement à la main : reprise, notification
+système, et `setDestinationInExternalFilesDir(DIRECTORY_DOWNLOADS)` n'exige
+**aucune permission de stockage** à aucun niveau d'API — dossier privé de l'app,
+hors du champ du scoped storage, effacé à la désinstallation.
+
+**Progression par sondage du curseur, pas de `BroadcastReceiver`.** Trois raisons :
+`ACTION_DOWNLOAD_COMPLETE` ne donne que la fin, il faudrait sonder de toute façon
+pour la barre — deux mécanismes pour un écran, c'en est un de trop ; un receiver
+enregistré à l'exécution doit déclarer `RECEIVER_EXPORTED`/`NOT_EXPORTED` depuis
+Android 14, et un receiver de manifeste serait un point d'entrée de plus à
+justifier ; et la progression n'intéresse que tant que l'écran est ouvert — au-delà,
+la notification de `DownloadManager` fait le travail gratuitement.
+
+**Intégrité : la taille, puis l'empreinte.** `docs/release.md` impose déjà de
+publier le SHA-256 dans les notes, on ne fait que le lire. Il faut être honnête sur
+ce qu'il prouve : arrivant par le même canal TLS que l'APK, il protège de la
+corruption et de l'accident de CDN, **pas** d'un dépôt compromis. La vraie
+protection d'authenticité est ailleurs, et elle est gratuite — Android refuse
+d'installer par-dessus l'existant un APK qui ne porte pas notre clé v2/v3 (D29).
+C'est l'argument le plus fort du dispositif et il ne coûte rien.
+
+**`FileProvider` + `ACTION_VIEW`, et non `PackageInstaller` en session.**
+`ACTION_INSTALL_PACKAGE` est déprécié depuis l'API 29 ; c'est `ACTION_VIEW` avec
+`application/vnd.android.package-archive` et `FLAG_GRANT_READ_URI_PERMISSION` — sans
+ce dernier, l'installateur affiche « Analyse impossible ». Le `PackageInstaller` en
+session exigerait un `PendingIntent` **mutable** (Android 12+), un receiver pour
+`STATUS_PENDING_USER_ACTION` avec `RECEIVER_NOT_EXPORTED` (Android 14+) et une table
+de statuts, pour un seul avantage — l'écriture en flux — sans objet ici puisque
+`DownloadManager` a déjà posé le fichier. Sur une surcouche hostile, le chemin le
+plus banal est le plus sûr. Il redeviendrait intéressant pour une installation en
+arrière-plan ou différentielle : c'est noté pour qu'on ne refasse pas l'analyse.
+
+⚠ Le nom du fichier téléchargé se construit depuis **notre** tag, filtré, jamais
+depuis le `name` de l'asset : un nom de fichier venu d'un JSON distant est
+exactement le genre de détail qui finit en CVE.
+
+**Tout est enveloppé de `runCatching`, et tout retombe sur le repli navigateur** :
+`com.android.providers.downloads` peut être désactivé (cas réel sur MIUI),
+`getExternalFilesDir` peut rendre `null`, l'écran des sources inconnues peut ne pas
+répondre à l'action avec `data`. Le bouton « ouvrir la page de la version » est
+toujours offert, jamais conditionnel — sur certains appareils c'est le seul chemin
+qui aboutit.
+
+Le nettoyage de l'APK ne peut pas se faire après l'installation : le processus est
+remplacé, plus rien de nous ne s'exécute. Il a donc lieu à l'ouverture suivante
+(`UpdateRepository.cleanUpIfInstalled`), ce qui ramasse au passage les fichiers
+d'une installation abandonnée. `RescheduleReceiver` n'est pas mis à contribution :
+il écoute déjà `MY_PACKAGE_REPLACED` pour les alarmes (D32) et doit rendre la main
+vite.
+
+### Un écran, pas un dialogue
+
+Des notes de version multi-paragraphes, une progression qui doit survivre à un
+aller-retour vers un écran système, un interrupteur d'opt-out, une phrase de
+confidentialité, et une destination nécessaire **même quand tout est à jour** : un
+dialogue qui tient tout cela est un écran déguisé. Le précédent tranche —
+`Screen.RELIABILITY` a été créé pour ce profil exact (diagnostic, actions,
+explications), tandis que l'éditeur d'invocation est resté un dialogue parce que
+c'est un formulaire court. **D7 tient** : une entrée d'enum, une branche de `when`,
+le `BackHandler` générique déjà en place.
+
+La note d'accueil suit le patron de `ReliabilityBanner` — composable autonome,
+aucun champ dans `HomeUiState`, `if (!visible) return` — avec une seule adaptation,
+nécessaire : la source est asynchrone, donc l'état se recalcule à la fois sur
+`ON_RESUME` (report, version ignorée, opt-out : des préférences, non réactives) et
+à chaque émission du repository. Elle est posée **après** celle de la fiabilité :
+l'avertissement dit que l'app échoue à son métier, la mise à jour n'est qu'un
+agrément, et la seconde ne doit jamais repousser la première vers le bas. Couleur
+`tertiaryContainer` et non `errorContainer` — une version disponible n'est pas une
+erreur, et le ton tertiaire est déjà celui de l'informatif non urgent (suggestion
+du Coran, encart de Ramadan).
+
+**Persistance en `SharedPreferences`** (`UpdateLog`, calqué sur `ReliabilityLog`) et
+non en DataStore : la note d'accueil a besoin d'une lecture **synchrone** — le
+repository amorce son `StateFlow` dans son constructeur, donc rien ne clignote à la
+première composition —, et l'argument qui avait fait naître le second DataStore du
+Coran (« la position de lecture s'écrit à chaque pause ») joue ici en sens inverse,
+avec une écriture par jour. C'est aussi la même famille de données que le report de
+bannière et le témoin OEM.
+
+Tout ce dont l'écran a besoin est persisté à la vérification, **notes de version
+comprises** : après une seule vérification réussie, la note et l'écran entier
+s'affichent hors ligne. Seul le téléchargement demande le réseau — pendant du cache
+de catalogue de D41.

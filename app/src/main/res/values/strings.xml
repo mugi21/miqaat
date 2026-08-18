@@ -230,6 +230,38 @@
     <string name="quran_player_stop">إنهاء التشغيل</string>
     <string name="quran_player_open">فتح المشغّل</string>
 
+    <!-- Mise à jour depuis GitHub (D44) : temporaire, en attendant Google Play -->
+    <string name="update_settings_title">تحديث التطبيق</string>
+    <string name="update_settings_current">النسخة %1$s</string>
+    <string name="update_settings_available">النسخة %1$s متوفّرة</string>
+    <string name="update_home_banner">نسخة جديدة من ميقات متوفّرة: %1$s</string>
+    <string name="update_action_view">عرض</string>
+    <string name="update_installed_version">النسخة المثبّتة: %1$s</string>
+    <string name="update_new_version">النسخة الجديدة: %1$s</string>
+    <string name="update_notes_title">الجديد في هذه النسخة</string>
+    <string name="update_no_notes">لا توجد ملاحظات لهذه النسخة.</string>
+    <string name="update_up_to_date">لديك أحدث نسخة.</string>
+    <string name="update_never_checked">لم يتمّ التحقّق بعد</string>
+    <string name="update_last_checked">آخر تحقّق: %1$s</string>
+    <string name="update_action_check">تحقّق الآن</string>
+    <string name="update_checking">جارٍ التحقّق…</string>
+    <string name="update_action_download">تنزيل (%1$s)</string>
+    <string name="update_downloading">جارٍ التنزيل… %1$d %%</string>
+    <string name="update_action_install">تثبيت</string>
+    <string name="update_action_cancel">إلغاء التنزيل</string>
+    <string name="update_action_skip">تجاهل هذه النسخة</string>
+    <string name="update_action_browser">فتح صفحة النسخة</string>
+    <string name="update_unknown_sources_title">السماح بالتثبيت</string>
+    <string name="update_unknown_sources_hint">لتثبيت التحديث، يطلب أندرويد إذنًا بتثبيت التطبيقات انطلاقًا من ميقات. يُمنح مرّة واحدة.</string>
+    <string name="update_unknown_sources_manual">افتح إعدادات الهاتف ← التطبيقات ← ميقات ← تثبيت تطبيقات غير معروفة، وفعّل الإذن.</string>
+    <string name="update_error_network">تعذّر التحقّق من التحديثات. تحقّق من اتصالك.</string>
+    <string name="update_error_download">فشل التنزيل.</string>
+    <string name="update_error_checksum">الملفّ المنزَّل غير مطابق لبصمته، وقد حُذف. جرّب فتح صفحة النسخة.</string>
+    <string name="update_error_install">تعذّر فتح مثبّت النظام.</string>
+    <string name="update_auto_check">التحقّق التلقائي</string>
+    <string name="update_auto_check_hint">مرّة واحدة في اليوم على الأكثر، عند فتح التطبيق.</string>
+    <string name="update_privacy_note">لا يرسل ميقات أيّ بيانات: يقرأ فقط قائمة النسخ المنشورة على github.com، ولا ينزّل شيئًا إلّا بطلبك.</string>
+
     <!-- Widget de l'écran d'accueil -->
     <string name="widget_label">ميقات — الصلاة القادمة</string>
     <string name="widget_description">الصلاة القادمة والوقت المتبقّي ومواقيت اليوم على الشاشة الرئيسية</string>

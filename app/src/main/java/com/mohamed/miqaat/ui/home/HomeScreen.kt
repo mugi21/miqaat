@@ -33,6 +33,7 @@ import com.mohamed.miqaat.R
 import com.mohamed.miqaat.domain.model.PrayerName
 import com.mohamed.miqaat.miqaatApp
 import com.mohamed.miqaat.ui.reliability.ReliabilityBanner
+import com.mohamed.miqaat.ui.update.UpdateBanner
 import com.mohamed.miqaat.ui.theme.MiqaatTheme
 
 @Composable
@@ -43,6 +44,7 @@ fun HomeScreen(
     onOpenInvocations: () -> Unit,
     onOpenQuran: () -> Unit,
     onOpenReliability: () -> Unit,
+    onOpenUpdate: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = homeViewModel(),
 ) {
@@ -55,6 +57,7 @@ fun HomeScreen(
         onOpenInvocations = onOpenInvocations,
         onOpenQuran = onOpenQuran,
         onOpenReliability = onOpenReliability,
+        onOpenUpdate = onOpenUpdate,
         modifier = modifier,
     )
 }
@@ -79,6 +82,7 @@ private fun HomeContent(
     onOpenInvocations: () -> Unit,
     onOpenQuran: () -> Unit = {},
     onOpenReliability: () -> Unit = {},
+    onOpenUpdate: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     Box(modifier = modifier.fillMaxSize()) {
@@ -99,6 +103,13 @@ private fun HomeContent(
                 onOpen = onOpenReliability,
                 // Marges portées par la bannière elle-même : invisible, elle ne
                 // compose rien du tout et ne laisse donc aucun blanc.
+                modifier = Modifier.padding(start = 20.dp, end = 20.dp, bottom = 16.dp),
+            )
+            // Après la fiabilité, jamais avant : l'avertissement dit que l'app
+            // échoue à son métier, la mise à jour n'est qu'un agrément — la
+            // seconde ne doit pas repousser la première vers le bas.
+            UpdateBanner(
+                onOpen = onOpenUpdate,
                 modifier = Modifier.padding(start = 20.dp, end = 20.dp, bottom = 16.dp),
             )
             Text(

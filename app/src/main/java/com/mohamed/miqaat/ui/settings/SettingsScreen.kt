@@ -56,6 +56,8 @@ import com.mohamed.miqaat.domain.model.NotificationSettings
 import com.mohamed.miqaat.domain.model.PrayerName
 import com.mohamed.miqaat.domain.model.PrayerTimeAdjustments
 import com.mohamed.miqaat.domain.model.ReminderSettings
+import com.mohamed.miqaat.data.update.UpdateLog
+import com.mohamed.miqaat.domain.update.UpdateVerdict
 import com.mohamed.miqaat.miqaatApp
 import com.mohamed.miqaat.ui.labelRes
 import com.mohamed.miqaat.notifications.NotificationChannels
@@ -67,6 +69,7 @@ import java.util.Locale
 fun SettingsScreen(
     onBack: () -> Unit,
     onOpenReliability: () -> Unit,
+    onOpenUpdate: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: SettingsViewModel = settingsViewModel(),
 ) {
@@ -82,6 +85,7 @@ fun SettingsScreen(
         language = AppLocale.current(context),
         onBack = onBack,
         onOpenReliability = onOpenReliability,
+        onOpenUpdate = onOpenUpdate,
         onNotificationModeSelected = viewModel::setNotificationMode,
         onMethodSelected = viewModel::setMethod,
         onAutoSelected = viewModel::setMethodAuto,
@@ -138,6 +142,7 @@ private fun SettingsContent(
     language: AppLanguage,
     onBack: () -> Unit,
     onOpenReliability: () -> Unit,
+    onOpenUpdate: () -> Unit,
     onNotificationModeSelected: (NotificationMode) -> Unit,
     onMethodSelected: (MethodOption) -> Unit,
     onAutoSelected: () -> Unit,
@@ -248,6 +253,8 @@ private fun SettingsContent(
                     value = stringResource(R.string.settings_reliability_hint),
                     onClick = onOpenReliability,
                 )
+                SettingDivider()
+                UpdateRow(onClick = onOpenUpdate)
                 SettingDivider()
                 SettingRow(
                     title = stringResource(R.string.settings_language),
@@ -437,6 +444,29 @@ private fun AdjustmentRow(label: String, minutes: Int, onChanged: (Int) -> Unit)
             onClick = { onChanged(minutes + 1) },
         )
     }
+}
+
+@Composable
+private fun UpdateRow(onClick: () -> Unit) {
+    val context = LocalContext.current
+    val repository = context.miqaatApp.updateRepository
+    val release by repository.latest.collectAsStateWithLifecycle()
+    val installed = repository.installed()
+    // Lu ici et non dans SettingsViewModel : celui-ci ne connaît que les réglages
+    // de calcul, et tout ce qu'on y écrirait replanifierait l'alarme.
+    val available = release != null &&
+        release?.tag != UpdateLog.skippedTag(context) &&
+        release?.let { UpdateVerdict.isNewer(it, installed.name, installed.code) } == true
+
+    SettingRow(
+        title = stringResource(R.string.update_settings_title),
+        value = if (available) {
+            stringResource(R.string.update_settings_available, release?.tag.orEmpty())
+        } else {
+            stringResource(R.string.update_settings_current, installed.name)
+        },
+        onClick = onClick,
+    )
 }
 
 @Composable

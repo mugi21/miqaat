@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!--
+        getExternalFilesDir(DIRECTORY_DOWNLOADS) : aucune permission de stockage à
+        aucun niveau d'API, hors du champ du scoped storage, effacé à la
+        désinstallation, et rien d'autre que l'APK en cours n'y séjourne.
+
+        ⚠ `external-files-path` désigne getExternalFilesDir(null) ; comme
+        DownloadManager écrit dans son sous-dossier Download/, c'est bien lui qu'il
+        faut nommer ici. Une erreur de chemin ne se voit qu'au moment précis de
+        l'installation, par un « Failed to find configured root ».
+    -->
+    <external-files-path
+        name="updates"
+        path="Download/" />
+</paths>

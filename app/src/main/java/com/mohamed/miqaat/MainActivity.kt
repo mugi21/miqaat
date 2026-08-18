@@ -45,12 +45,13 @@ import com.mohamed.miqaat.ui.quran.QuranScreen
 import com.mohamed.miqaat.ui.reliability.ReliabilityScreen
 import com.mohamed.miqaat.ui.settings.SettingsScreen
 import com.mohamed.miqaat.ui.splash.SplashScreen
+import com.mohamed.miqaat.ui.update.UpdateScreen
 import com.mohamed.miqaat.ui.theme.MiqaatTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /** Les écrans de premier niveau ; enum = Serializable, donc rememberSaveable le garde. */
-private enum class Screen { HOME, SETTINGS, QIBLA, CALENDAR, INVOCATIONS, RELIABILITY, QURAN }
+private enum class Screen { HOME, SETTINGS, QIBLA, CALENDAR, INVOCATIONS, RELIABILITY, QURAN, UPDATE }
 
 class MainActivity : ComponentActivity() {
 
@@ -97,6 +98,7 @@ class MainActivity : ComponentActivity() {
         if (hasPermission(Manifest.permission.ACCESS_COARSE_LOCATION)) {
             refreshLocationThenReschedule()
         }
+        checkForUpdate()
 
         setContent {
             MiqaatTheme {
@@ -188,16 +190,23 @@ class MainActivity : ComponentActivity() {
                                 onOpenInvocations = { screen = Screen.INVOCATIONS },
                                 onOpenQuran = { screen = Screen.QURAN },
                                 onOpenReliability = { screen = Screen.RELIABILITY },
+                                onOpenUpdate = { screen = Screen.UPDATE },
                                 modifier = screenModifier,
                             )
 
                             Screen.SETTINGS -> SettingsScreen(
                                 onBack = { screen = Screen.HOME },
                                 onOpenReliability = { screen = Screen.RELIABILITY },
+                                onOpenUpdate = { screen = Screen.UPDATE },
                                 modifier = screenModifier,
                             )
 
                             Screen.RELIABILITY -> ReliabilityScreen(
+                                onBack = { screen = Screen.HOME },
+                                modifier = screenModifier,
+                            )
+
+                            Screen.UPDATE -> UpdateScreen(
                                 onBack = { screen = Screen.HOME },
                                 modifier = screenModifier,
                             )
@@ -237,6 +246,19 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * La veille des releases GitHub (D44) : le **seul** point de départ d'une
+     * vérification, et il est ici plutôt que dans la chaîne d'alarmes ou un
+     * receiver. Au plus une fois par jour, coupable depuis l'écran de mise à jour,
+     * et sans conséquence si elle échoue.
+     */
+    private fun checkForUpdate() {
+        lifecycleScope.launch {
+            miqaatApp.updateRepository.cleanUpIfInstalled()
+            miqaatApp.updateRepository.refreshIfDue()
         }
     }
 
